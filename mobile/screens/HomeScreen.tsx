@@ -1,16 +1,27 @@
 import { useState } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList } from "react-native";
 import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
-import { workplaces, ActionType } from "../constants/data";
+import { workplaces } from "../constants/data";
+import { useAppStore, ActionType } from "../store/useAppStore";
 
 interface HomeScreenProps {
-  selectedAction: ActionType;
-  setSelectedAction: (action: ActionType) => void;
   onRegister: () => void;
 }
 
-export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: HomeScreenProps) {
-  const [selectedWorkplace, setSelectedWorkplace] = useState("");
+export function HomeScreen({ onRegister }: HomeScreenProps) {
+  // Zustand store
+  const {
+    selectedAction,
+    selectedWorkplace,
+    observation,
+    isWorking,
+    setAction,
+    setWorkplace,
+    setObservation,
+    setWorkingStatus,
+  } = useAppStore();
+
+  // Local UI state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [orderedWorkplaces, setOrderedWorkplaces] = useState(workplaces);
   const [motivoAusencia, setMotivoAusencia] = useState("");
@@ -24,7 +35,7 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
   };
 
   const handleSelectWorkplace = (wpName: string) => {
-    setSelectedWorkplace(wpName);
+    setWorkplace(wpName);
     setIsDropdownOpen(false);
     setWorkplaceError("");
     
@@ -40,6 +51,14 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
       setWorkplaceError("Debes seleccionar un lugar de trabajo");
       return;
     }
+    
+    // Update working status based on action
+    if (selectedAction === "entrada") {
+      setWorkingStatus(true);
+    } else if (selectedAction === "salida") {
+      setWorkingStatus(false);
+    }
+    
     onRegister();
   };
 
@@ -51,7 +70,15 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
 
   return (
     <ScrollView className="flex-1 px-6 pb-4" contentContainerStyle={{ flexGrow: 1 }}>
-      <View className="flex flex-col gap-2 mt-8">
+      {/* Status indicator - using Zustand isWorking state */}
+      <View className="flex-row items-center justify-center gap-2 mt-4">
+        <View className={`w-2.5 h-2.5 rounded-full ${isWorking ? "bg-[#62882B]" : "bg-[#ED701E]"}`} />
+        <Text className={`text-xs font-medium ${isWorking ? "text-[#62882B]" : "text-[#ED701E]"}`}>
+          {isWorking ? "En horario laboral" : "Fuera de horario"}
+        </Text>
+      </View>
+
+      <View className="flex flex-col gap-2 mt-6">
         <Text className="text-sm font-semibold text-[#0F172A]">Lugar de trabajo</Text>
         <Pressable
           onPress={() => setIsDropdownOpen(true)}
@@ -112,7 +139,7 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
             return (
               <Pressable
                 key={action}
-                onPress={() => setSelectedAction(action)}
+                onPress={() => setAction(action)}
                 className={`flex-1 h-12 rounded-xl items-center justify-center ${
                   isSelected
                     ? "bg-[#0D80AE]"
@@ -129,11 +156,13 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
       </View>
 
       <View className="flex flex-col gap-2 mt-6">
-        <Text className="text-sm font-semibold text-[#0F172A]">Observación (opcional)</Text>
+        <Text className="text-sm font-semibold text-[#0F172A]">Observacion (opcional)</Text>
         <TextInput
           placeholder="Agregar una nota..."
           multiline
           numberOfLines={selectedAction === "ausencia" ? 2 : 3}
+          value={observation}
+          onChangeText={setObservation}
           className="w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-3 text-base text-[#0F172A]"
           placeholderTextColor="#9CA3AF"
           textAlignVertical="top"
@@ -198,11 +227,11 @@ export function HomeScreen({ selectedAction, setSelectedAction, onRegister }: Ho
         onPress={handleSubmit}
         className="h-14 w-full rounded-2xl bg-[#0D80AE] items-center justify-center mt-4"
       >
-        <Text className="text-white text-base font-semibold">{buttonText[selectedAction]}</Text>
+        <Text className="text-white text-base font-semibold">{buttonText[selectedAction || "entrada"]}</Text>
       </Pressable>
 
       <Text className="text-sm text-gray-400 text-center py-3">
-        El registro se realiza con su ubicación actual
+        El registro se realiza con su ubicacion actual
       </Text>
     </ScrollView>
   );
