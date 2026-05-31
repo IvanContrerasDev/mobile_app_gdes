@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList } from "react-native";
+import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, ActivityIndicator } from "react-native";
 import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
 import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
 
 interface HomeScreenProps {
   onRegister: () => void;
+}
+
+// Registration record type (for simulation)
+interface RegistrationRecord {
+  workplace: string;
+  action: ActionType;
+  observation: string;
+  timestamp: Date;
 }
 
 export function HomeScreen({ onRegister }: HomeScreenProps) {
@@ -19,6 +27,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     setWorkplace,
     setObservation,
     setWorkingStatus,
+    resetRegistration,
   } = useAppStore();
 
   // Local UI state
@@ -26,7 +35,11 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   const [orderedWorkplaces, setOrderedWorkplaces] = useState(workplaces);
   const [motivoAusencia, setMotivoAusencia] = useState("");
   const [showMotivoDropdown, setShowMotivoDropdown] = useState(false);
+  
+  // Validation and feedback state
   const [workplaceError, setWorkplaceError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const buttonText = {
     entrada: "Registrar entrada",
@@ -46,20 +59,75 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSelectAction = (action: ActionType) => {
+    setAction(action);
+    setActionError("");
+  };
+
+  const validateForm = (): boolean => {
+    let isValid = true;
+    
+    // Validate workplace
     if (!selectedWorkplace) {
-      setWorkplaceError("Debes seleccionar un lugar de trabajo");
+      setWorkplaceError("Debe seleccionar un lugar de trabajo");
+      isValid = false;
+    } else {
+      setWorkplaceError("");
+    }
+    
+    // Validate action
+    if (!selectedAction) {
+      setActionError("Debe seleccionar un tipo de registro");
+      isValid = false;
+    } else {
+      setActionError("");
+    }
+    
+    return isValid;
+  };
+
+  const handleSubmit = async () => {
+    // Run validations
+    if (!validateForm()) {
       return;
     }
     
-    // Update working status based on action
-    if (selectedAction === "entrada") {
-      setWorkingStatus(true);
-    } else if (selectedAction === "salida") {
-      setWorkingStatus(false);
-    }
+    // Set loading state
+    setIsLoading(true);
     
-    onRegister();
+    try {
+      // Simulate registration - create record object (not sent anywhere)
+      const registrationRecord: RegistrationRecord = {
+        workplace: selectedWorkplace!,
+        action: selectedAction!,
+        observation: observation,
+        timestamp: new Date(),
+      };
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Update working status based on action
+      if (selectedAction === "entrada") {
+        setWorkingStatus(true);
+      } else if (selectedAction === "salida") {
+        setWorkingStatus(false);
+      }
+      // ausencia doesn't change working status
+      
+      // Clear observation after successful registration
+      setObservation("");
+      setMotivoAusencia("");
+      
+      // Call onRegister to show success screen
+      onRegister();
+      
+    } catch (error) {
+      // Fallback error handling (shouldn't happen in simulation)
+      setWorkplaceError("Error al registrar. Intente nuevamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const motivos = [
@@ -139,7 +207,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
             return (
               <Pressable
                 key={action}
-                onPress={() => setAction(action)}
+                onPress={() => handleSelectAction(action)}
                 className={`flex-1 h-12 rounded-xl items-center justify-center ${
                   isSelected
                     ? "bg-[#0D80AE]"
@@ -153,6 +221,9 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
             );
           })}
         </View>
+        {actionError && (
+          <Text className="text-xs text-red-500 mt-1">{actionError}</Text>
+        )}
       </View>
 
       <View className="flex flex-col gap-2 mt-6">
@@ -225,9 +296,18 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
       <Pressable
         onPress={handleSubmit}
-        className="h-14 w-full rounded-2xl bg-[#0D80AE] items-center justify-center mt-4"
+        disabled={isLoading}
+        className={`h-14 w-full rounded-2xl items-center justify-center mt-4 ${
+          isLoading ? "bg-[#0D80AE]/70" : "bg-[#0D80AE]"
+        }`}
       >
-        <Text className="text-white text-base font-semibold">{buttonText[selectedAction || "entrada"]}</Text>
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text className="text-white text-base font-semibold">
+            {buttonText[selectedAction || "entrada"]}
+          </Text>
+        )}
       </Pressable>
 
       <Text className="text-sm text-gray-400 text-center py-3">
