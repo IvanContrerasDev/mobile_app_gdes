@@ -10,7 +10,7 @@ interface AppHeaderProps {
 export function AppHeader({ statusColor, statusText, showLogoAndProfile = true }: AppHeaderProps) {
   return (
     <View className="px-6 pt-6 pb-4">
-      <View className="flex flex-row items-start justify-between">
+      <View className="flex flex-row items-center justify-between">
         {showLogoAndProfile ? (
           <View className="w-[70px]">
             <Image
@@ -24,8 +24,8 @@ export function AppHeader({ statusColor, statusText, showLogoAndProfile = true }
           <View />
         )}
         
-        <View className="flex flex-col items-center gap-2">
-          <View className="flex flex-row items-center gap-1.5">
+        <View className="flex flex-col items-center">
+          <View className="flex flex-row items-center gap-1.5 mb-2">
             <View
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: statusColor }}
