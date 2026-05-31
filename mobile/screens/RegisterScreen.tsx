@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Image, Modal, FlatList } from "react-native";
+import { View, Text, Pressable, ScrollView, Image, Modal, FlatList, KeyboardAvoidingView, Platform } from "react-native";
 import { InputWithError } from "../components/InputWithError";
 import { ChevronDownIcon, CheckIcon } from "../components/Icons";
 import { validateEmail, validatePassword, validatePhone, validateLegajo, validateDNI, validateRequired } from "../utils/validations";
@@ -47,7 +47,17 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
   };
 
   return (
-    <ScrollView className="flex-1 px-6 py-6" contentContainerStyle={{ flexGrow: 1 }}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      className="flex-1"
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <ScrollView 
+        className="flex-1 px-6 py-6" 
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       <View className="flex flex-col items-center gap-3">
         <View className="w-[100px] h-[100px]">
           <Image
@@ -192,6 +202,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           </Pressable>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
