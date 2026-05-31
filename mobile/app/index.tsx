@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { View, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Screens
@@ -71,15 +71,12 @@ export default function App() {
 
   return (
     <View className="flex-1 bg-[#EDF2F5]">
-      <SafeAreaView className="flex-1 items-center justify-center px-2 py-2">
-        <View className="w-full max-w-[420px] flex-1 max-h-[900px]">
-          <View className="bg-white flex-1 rounded-[32px] overflow-hidden" style={{
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 4,
-          }}>
+      <SafeAreaView className="flex-1">
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
+          <View className="flex-1 bg-white">
             
             {/* Google Modal */}
             <GoogleModal 
@@ -183,7 +180,7 @@ export default function App() {
               </View>
             )}
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
