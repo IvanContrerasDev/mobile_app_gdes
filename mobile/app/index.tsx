@@ -24,8 +24,8 @@ import { AppHeader } from "../components/AppHeader";
 import { BottomTabs } from "../components/BottomTabs";
 import { GoogleModal } from "../components/GoogleModal";
 
-// Types
-import { ActionType, StatusState } from "../constants/data";
+// Store
+import { useAppStore } from "../store/useAppStore";
 
 type StepType = 
   | "login" 
@@ -46,24 +46,13 @@ type StepType =
 
 export default function App() {
   const [step, setStep] = useState<StepType>("login");
-  const [selectedAction, setSelectedAction] = useState<ActionType>("entrada");
   const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [statusState, setStatusState] = useState<StatusState>("initial");
 
-  const getStatusColor = () => {
-    if (statusState === "entrada") return "#62882B";
-    if (statusState === "salida") return "#DC2626";
-    return "#9CA3AF";
-  };
-  
-  const getStatusText = () => {
-    if (statusState === "entrada") return "En horario laboral";
-    if (statusState === "salida") return "Fuera de horario";
-    return "Sin registro";
-  };
+  // Zustand store
+  const { isWorking, selectedAction, resetRegistration } = useAppStore();
 
-  const statusColor = getStatusColor();
-  const statusText = getStatusText();
+  const statusColor = isWorking ? "#62882B" : "#ED701E";
+  const statusText = isWorking ? "En horario laboral" : "Fuera de horario";
 
   const isAppScreen = step === "home" || step === "homeSuccess" || step === "documentos" || step === "perfil";
 
@@ -166,10 +155,7 @@ export default function App() {
 
                 {step === "home" && (
                   <HomeScreen 
-                    selectedAction={selectedAction} 
-                    setSelectedAction={setSelectedAction}
                     onRegister={() => {
-                      setStatusState(selectedAction);
                       setStep("homeSuccess");
                     }}
                   />
@@ -177,8 +163,11 @@ export default function App() {
                 
                 {step === "homeSuccess" && (
                   <HomeSuccessScreen 
-                    action={selectedAction}
-                    onContinue={() => setStep("home")}
+                    action={selectedAction || "entrada"}
+                    onContinue={() => {
+                      resetRegistration();
+                      setStep("home");
+                    }}
                   />
                 )}
                 
