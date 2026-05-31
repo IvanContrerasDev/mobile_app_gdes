@@ -3,17 +3,11 @@ import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, Activity
 import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
 import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
+import { registerEvent } from "../services/registerService";
+import { RegisterRequest } from "../types/api";
 
 interface HomeScreenProps {
   onRegister: () => void;
-}
-
-// Registration record type (for simulation)
-interface RegistrationRecord {
-  workplace: string;
-  action: ActionType;
-  observation: string;
-  timestamp: Date;
 }
 
 export function HomeScreen({ onRegister }: HomeScreenProps) {
@@ -39,6 +33,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   // Validation and feedback state
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
+  const [generalError, setGeneralError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const buttonText = {
@@ -87,6 +82,9 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   };
 
   const handleSubmit = async () => {
+    // Clear previous errors
+    setGeneralError("");
+    
     // Run validations
     if (!validateForm()) {
       return;
@@ -96,35 +94,43 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     setIsLoading(true);
     
     try {
-      // Simulate registration - create record object (not sent anywhere)
-      const registrationRecord: RegistrationRecord = {
-        workplace: selectedWorkplace!,
+      // Find workplace ID from name
+      const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
+      
+      // Build request using service types
+      const request: RegisterRequest = {
+        workplaceId: workplace?.id || "",
         action: selectedAction!,
-        observation: observation,
-        timestamp: new Date(),
+        observation: observation || undefined,
+        timestamp: new Date().toISOString(),
       };
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Call service (placeholder API)
+      const response = await registerEvent(request);
       
-      // Update working status based on action
-      if (selectedAction === "entrada") {
-        setWorkingStatus(true);
-      } else if (selectedAction === "salida") {
-        setWorkingStatus(false);
+      if (response.success) {
+        // Update working status based on action
+        if (selectedAction === "entrada") {
+          setWorkingStatus(true);
+        } else if (selectedAction === "salida") {
+          setWorkingStatus(false);
+        }
+        // ausencia doesn't change working status
+        
+        // Clear observation after successful registration
+        setObservation("");
+        setMotivoAusencia("");
+        
+        // Call onRegister to show success screen
+        onRegister();
+      } else {
+        // Handle API error response
+        setGeneralError(response.message);
       }
-      // ausencia doesn't change working status
-      
-      // Clear observation after successful registration
-      setObservation("");
-      setMotivoAusencia("");
-      
-      // Call onRegister to show success screen
-      onRegister();
       
     } catch (error) {
-      // Fallback error handling (shouldn't happen in simulation)
-      setWorkplaceError("Error al registrar. Intente nuevamente.");
+      // Fallback error handling
+      setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -293,6 +299,12 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       )}
 
       <View className="flex-1 min-h-4" />
+
+      {generalError && (
+        <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-4">
+          <Text className="text-sm text-red-600 text-center">{generalError}</Text>
+        </View>
+      )}
 
       <Pressable
         onPress={handleSubmit}
