@@ -4,6 +4,7 @@ import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
 import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
 import { registerEvent } from "../services/registerService";
+import { getCurrentLocation, LocationError } from "../services/locationService";
 import { RegisterRequest } from "../types/api";
 
 interface HomeScreenProps {
@@ -35,6 +36,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   const [actionError, setActionError] = useState("");
   const [generalError, setGeneralError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const buttonText = {
     entrada: "Registrar entrada",
@@ -92,8 +94,18 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     
     // Set loading state
     setIsLoading(true);
+    setLoadingMessage("Obteniendo ubicación...");
     
     try {
+      // Get current location first (required for registration)
+      const location = await getCurrentLocation();
+      
+      // Log location for now (not sent to API yet)
+      console.log("[v0] Location obtained:", location);
+      
+      // Update loading message for registration
+      setLoadingMessage("Registrando...");
+      
       // Find workplace ID from name
       const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
       
@@ -129,10 +141,16 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       }
       
     } catch (error) {
-      // Fallback error handling
-      setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
+      // Handle location errors specifically
+      if (error instanceof LocationError) {
+        setGeneralError(error.message);
+      } else {
+        // Fallback error handling
+        setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
+      }
     } finally {
       setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -314,7 +332,10 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         }`}
       >
         {isLoading ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <View className="flex-row items-center gap-2">
+            <ActivityIndicator color="#FFFFFF" size="small" />
+            <Text className="text-white text-sm font-medium">{loadingMessage}</Text>
+          </View>
         ) : (
           <Text className="text-white text-base font-semibold">
             {buttonText[selectedAction || "entrada"]}
