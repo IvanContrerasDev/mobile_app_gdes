@@ -100,22 +100,26 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       // Get current location first (required for registration)
       const location = await getCurrentLocation();
       
-      // Log location for now (not sent to API yet)
-      console.log("[v0] Location obtained:", location);
-      
       // Update loading message for registration
       setLoadingMessage("Registrando...");
       
       // Find workplace ID from name
       const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
       
-      // Build request using service types
+      // Build request using service types (includes location data)
       const request: RegisterRequest = {
         workplaceId: workplace?.id || "",
         action: selectedAction!,
         observation: observation || undefined,
         timestamp: new Date().toISOString(),
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+        locationTimestamp: location.timestamp,
       };
+      
+      // Log complete request for verification
+      console.log("[v0] RegisterRequest:", request);
       
       // Call service (placeholder API)
       const response = await registerEvent(request);

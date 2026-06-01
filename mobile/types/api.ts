@@ -7,6 +7,11 @@ export interface RegisterRequest {
   action: RegisterAction;
   observation?: string;
   timestamp: string;
+  // Location data
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  locationTimestamp: string;
 }
 
 export interface RegisterResponse {
