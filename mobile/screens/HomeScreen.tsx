@@ -5,6 +5,8 @@ import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
 import { registerEvent } from "../services/registerService";
 import { getCurrentLocation, LocationError } from "../services/locationService";
+import { isOnline } from "../services/networkService";
+import { saveOfflineRegister } from "../services/offlineRegisterService";
 import { RegisterRequest } from "../types/api";
 
 interface HomeScreenProps {
@@ -35,6 +37,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
   const [generalError, setGeneralError] = useState("");
+  const [offlineMessage, setOfflineMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -84,8 +87,9 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   };
 
   const handleSubmit = async () => {
-    // Clear previous errors
+    // Clear previous errors and messages
     setGeneralError("");
+    setOfflineMessage("");
     
     // Run validations
     if (!validateForm()) {
@@ -96,32 +100,78 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     setIsLoading(true);
     setLoadingMessage("Obteniendo ubicación...");
     
+    let location;
     try {
       // Get current location first (required for registration)
-      const location = await getCurrentLocation();
+      location = await getCurrentLocation();
+    } catch (error) {
+      // Handle location errors - cannot proceed without GPS
+      setIsLoading(false);
+      setLoadingMessage("");
       
-      // Update loading message for registration
-      setLoadingMessage("Registrando...");
+      if (error instanceof LocationError) {
+        // Show specific location error
+        setGeneralError("No es posible registrar entrada/salida.\n\nDebe completar la planilla física.");
+      } else {
+        setGeneralError("No fue posible obtener su ubicación actual.\nVerifique que el GPS esté habilitado e intente nuevamente.");
+      }
+      return;
+    }
+    
+    // Build request using service types (includes location data)
+    const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
+    const request: RegisterRequest = {
+      workplaceId: workplace?.id || "",
+      action: selectedAction!,
+      observation: observation || undefined,
+      timestamp: new Date().toISOString(),
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy,
+      locationTimestamp: location.timestamp,
+    };
+    
+    // Log complete request for verification
+    console.log("[v0] RegisterRequest:", request);
+    
+    // Check connectivity
+    setLoadingMessage("Verificando conexión...");
+    const online = await isOnline();
+    
+    if (!online) {
+      // Offline mode - save locally
+      setLoadingMessage("Guardando registro offline...");
       
-      // Find workplace ID from name
-      const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
-      
-      // Build request using service types (includes location data)
-      const request: RegisterRequest = {
-        workplaceId: workplace?.id || "",
-        action: selectedAction!,
-        observation: observation || undefined,
-        timestamp: new Date().toISOString(),
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
-        locationTimestamp: location.timestamp,
-      };
-      
-      // Log complete request for verification
-      console.log("[v0] RegisterRequest:", request);
-      
-      // Call service (placeholder API)
+      try {
+        await saveOfflineRegister(request);
+        
+        // Update working status based on action (even offline)
+        if (selectedAction === "entrada") {
+          setWorkingStatus(true);
+        } else if (selectedAction === "salida") {
+          setWorkingStatus(false);
+        }
+        
+        // Clear fields
+        setObservation("");
+        setMotivoAusencia("");
+        
+        // Show offline success message
+        setOfflineMessage("Su dispositivo no posee conexión a Internet.\n\nSu registro se guardó localmente y se enviará cuando recupere la conectividad.");
+        
+      } catch (error) {
+        setGeneralError("No fue posible guardar el registro localmente.");
+      } finally {
+        setIsLoading(false);
+        setLoadingMessage("");
+      }
+      return;
+    }
+    
+    // Online mode - send to API
+    setLoadingMessage("Registrando...");
+    
+    try {
       const response = await registerEvent(request);
       
       if (response.success) {
@@ -131,7 +181,6 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         } else if (selectedAction === "salida") {
           setWorkingStatus(false);
         }
-        // ausencia doesn't change working status
         
         // Clear observation after successful registration
         setObservation("");
@@ -145,13 +194,8 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       }
       
     } catch (error) {
-      // Handle location errors specifically
-      if (error instanceof LocationError) {
-        setGeneralError(error.message);
-      } else {
-        // Fallback error handling
-        setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
-      }
+      // Fallback error handling
+      setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -325,6 +369,12 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       {generalError && (
         <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-4">
           <Text className="text-sm text-red-600 text-center">{generalError}</Text>
+        </View>
+      )}
+
+      {offlineMessage && (
+        <View className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-4">
+          <Text className="text-sm text-amber-700 text-center">{offlineMessage}</Text>
         </View>
       )}
 
