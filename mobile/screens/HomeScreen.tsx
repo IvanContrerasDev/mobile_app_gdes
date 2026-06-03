@@ -4,10 +4,12 @@ import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
 import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
 import { registerEvent } from "../services/registerService";
-import { getCurrentLocation, LocationError } from "../services/locationService";
+import { getCurrentLocation } from "../services/locationService";
 import { isOnline } from "../services/networkService";
-import { saveOfflineRegister } from "../services/offlineRegisterService";
 import { RegisterRequest } from "../types/api";
+
+// TODO: Implementar almacenamiento offline y sincronización automática en una futura versión.
+// import { saveOfflineRegister } from "../services/offlineRegisterService";
 
 interface HomeScreenProps {
   onRegister: () => void;
@@ -37,7 +39,6 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
   const [generalError, setGeneralError] = useState("");
-  const [offlineMessage, setOfflineMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -87,9 +88,8 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   };
 
   const handleSubmit = async () => {
-    // Clear previous errors and messages
+    // Clear previous errors
     setGeneralError("");
-    setOfflineMessage("");
     
     // Run validations
     if (!validateForm()) {
@@ -109,12 +109,22 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       setIsLoading(false);
       setLoadingMessage("");
       
-      if (error instanceof LocationError) {
-        // Show specific location error
-        setGeneralError("No es posible registrar entrada/salida.\n\nDebe completar la planilla física.");
-      } else {
-        setGeneralError("No fue posible obtener su ubicación actual.\nVerifique que el GPS esté habilitado e intente nuevamente.");
-      }
+      // Show detailed location error message
+      setGeneralError("No fue posible obtener su ubicación actual.\n\nVerifique que el GPS esté habilitado e intente nuevamente.\n\nSi el problema persiste o no puede resolverlo, utilice la planilla física de contingencia para registrar su jornada laboral.");
+      return;
+    }
+    
+    // Check connectivity before attempting registration
+    setLoadingMessage("Verificando conexión...");
+    const online = await isOnline();
+    
+    if (!online) {
+      // No internet connection - reject registration
+      setIsLoading(false);
+      setLoadingMessage("");
+      
+      // TODO: Implementar almacenamiento offline y sincronización automática en una futura versión.
+      setGeneralError("No posee conexión a Internet.\n\nPor favor, conéctese a una red e intente nuevamente.\n\nSi no puede realizar el registro digital, utilice la planilla física de contingencia correspondiente a su lugar de trabajo.");
       return;
     }
     
@@ -130,43 +140,6 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       accuracy: location.accuracy,
       locationTimestamp: location.timestamp,
     };
-    
-    // Log complete request for verification
-    console.log("[v0] RegisterRequest:", request);
-    
-    // Check connectivity
-    setLoadingMessage("Verificando conexión...");
-    const online = await isOnline();
-    
-    if (!online) {
-      // Offline mode - save locally
-      setLoadingMessage("Guardando registro offline...");
-      
-      try {
-        await saveOfflineRegister(request);
-        
-        // Update working status based on action (even offline)
-        if (selectedAction === "entrada") {
-          setWorkingStatus(true);
-        } else if (selectedAction === "salida") {
-          setWorkingStatus(false);
-        }
-        
-        // Clear fields
-        setObservation("");
-        setMotivoAusencia("");
-        
-        // Show offline success message
-        setOfflineMessage("Su dispositivo no posee conexión a Internet.\n\nSu registro se guardó localmente y se enviará cuando recupere la conectividad.");
-        
-      } catch (error) {
-        setGeneralError("No fue posible guardar el registro localmente.");
-      } finally {
-        setIsLoading(false);
-        setLoadingMessage("");
-      }
-      return;
-    }
     
     // Online mode - send to API
     setLoadingMessage("Registrando...");
@@ -190,12 +163,12 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         onRegister();
       } else {
         // Handle API error response
-        setGeneralError(response.message);
+        setGeneralError(response.message + "\n\nSi el problema persiste, utilice la planilla física de contingencia.");
       }
       
     } catch (error) {
-      // Fallback error handling
-      setGeneralError("Error del sistema al registrar. Por favor, intente nuevamente.");
+      // Fallback error handling with clear instructions
+      setGeneralError("No fue posible completar el registro debido a un error de comunicación con el servidor.\n\nPor favor, verifique su conexión e intente nuevamente.\n\nSi el problema persiste, utilice la planilla física de contingencia.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
@@ -369,12 +342,6 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       {generalError && (
         <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-4">
           <Text className="text-sm text-red-600 text-center">{generalError}</Text>
-        </View>
-      )}
-
-      {offlineMessage && (
-        <View className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-4">
-          <Text className="text-sm text-amber-700 text-center">{offlineMessage}</Text>
         </View>
       )}
 

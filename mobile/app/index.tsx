@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { View, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,9 +27,9 @@ import { GoogleModal } from "../components/GoogleModal";
 // Store
 import { useAppStore } from "../store/useAppStore";
 
-// Services
-import { subscribeToConnectivity } from "../services/networkService";
-import { syncPendingRegisters } from "../services/syncService";
+// TODO: Implementar sincronización automática de registros offline en una futura versión.
+// import { subscribeToConnectivity } from "../services/networkService";
+// import { syncPendingRegisters } from "../services/syncService";
 
 type StepType = 
   | "login" 
@@ -55,17 +55,7 @@ export default function App() {
   // Zustand store
   const { isWorking, selectedAction, resetRegistration } = useAppStore();
 
-  // Setup connectivity listener for auto-sync
-  useEffect(() => {
-    const unsubscribe = subscribeToConnectivity(() => {
-      // When connectivity is restored, sync pending registers
-      syncPendingRegisters();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  // TODO: Implementar listener de conectividad para sincronización automática de registros offline en una futura versión.
 
   const statusColor = isWorking ? "#62882B" : "#ED701E";
   const statusText = isWorking ? "En horario laboral" : "Fuera de horario";
