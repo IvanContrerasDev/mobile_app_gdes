@@ -29,7 +29,11 @@ export function DocumentosScreen() {
   const canUploadPlanilla = selectedMonth !== "" && planillaFileAttached;
 
   return (
-    <View className="flex-1 px-6 pb-4">
+    <View className="flex-1 pt-10 px-6 pb-4">
+
+      {/* Add empty view to balance the header spacing since we removed the profile icon */}
+      <View className="h-14"></View>
+
       <Text className="text-xl font-bold text-[#0F172A] mt-4">Documentos</Text>
       
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

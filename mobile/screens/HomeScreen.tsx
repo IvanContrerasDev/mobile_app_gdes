@@ -141,6 +141,8 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       locationTimestamp: location.timestamp,
     };
     
+    console.log("[v0] RegisterRequest:", request);
+    
     // Online mode - send to API
     setLoadingMessage("Registrando...");
     
@@ -186,7 +188,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       {/* Status indicator - using Zustand isWorking state */}
       <View className="flex-row items-center justify-center gap-2 mt-4">
         <View className={`w-2.5 h-2.5 rounded-full ${isWorking ? "bg-[#62882B]" : "bg-[#ED701E]"}`} />
-        <Text className={`text-xs font-medium ${isWorking ? "text-[#62882B]" : "text-[#ED701E]"}`}>
+        <Text className={`font-medium ${isWorking ? "text-[#62882B]" : "text-[#ED701E]"}`}>
           {isWorking ? "En horario laboral" : "Fuera de horario"}
         </Text>
       </View>

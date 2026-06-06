@@ -57,9 +57,6 @@ export default function App() {
 
   // TODO: Implementar listener de conectividad para sincronización automática de registros offline en una futura versión.
 
-  const statusColor = isWorking ? "#62882B" : "#ED701E";
-  const statusText = isWorking ? "En horario laboral" : "Fuera de horario";
-
   const isAppScreen = step === "home" || step === "homeSuccess" || step === "documentos" || step === "perfil";
 
   const handleTabChange = (tab: "home" | "documentos" | "perfil") => {
@@ -148,13 +145,7 @@ export default function App() {
 
             {isAppScreen && (
               <View className="flex-1">
-                {step !== "perfil" && (
-                  <AppHeader 
-                    statusColor={statusColor} 
-                    statusText={statusText}
-                    showLogoAndProfile={step !== "documentos"}
-                  />
-                )}
+                {step === "home" && (<AppHeader/> )}
 
                 {step === "home" && (
                   <HomeScreen 
