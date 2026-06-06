@@ -332,10 +332,10 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
             </Pressable>
           </Modal>
 
-          <Pressable className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white flex-row items-center justify-center gap-2">
+          {/* <Pressable className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white flex-row items-center justify-center gap-2">
             <AttachIcon size={16} color="#0F172A" />
             <Text className="text-sm font-medium text-[#0F172A]">Adjuntar archivo</Text>
-          </Pressable>
+          </Pressable> */}
         </View>
       )}
 
