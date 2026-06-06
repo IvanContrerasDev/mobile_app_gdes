@@ -47,6 +47,7 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.6.0",
     "expo": "^55.0.15",
+    "expo-image-picker": "^56.0.15",
     "expo-location": "^56.0.15",
     "expo-router": "^55.0.12",
     "expo-status-bar": "^55.0.5",
