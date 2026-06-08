@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, Image, ActivityIndicator } from "react-native";
 import { InputWithError } from "../components/InputWithError";
 import { GoogleIcon } from "../components/Icons";
 import { validateEmailOrLegajo, validatePassword } from "../utils/validations";
+import { login as loginRequest } from "../services/authService";
+import { useAuthStore } from "../stores/authStore";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -15,15 +17,40 @@ export function LoginScreen({ onLogin, onGoogleLogin, onForgotPassword, onRegist
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
+  const [authError, setAuthError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const loginToStore = useAuthStore((state) => state.login);
+
+  const handleSubmit = async () => {
+    setAuthError("");
+
     const emailError = validateEmailOrLegajo(email);
     const passwordError = validatePassword(password);
-    
+
     setErrors({ email: emailError, password: passwordError });
-    
-    if (!emailError && !passwordError) {
-      onLogin();
+
+    if (emailError || passwordError) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Execute mock authentication
+      const result = await loginRequest(email, password);
+
+      if (result.success && result.user) {
+        // Persist session in auth store
+        loginToStore(result.user);
+        onLogin();
+      } else {
+        setAuthError(result.message || "Usuario o contraseña incorrectos.");
+      }
+    } catch (error) {
+      setAuthError("No fue posible iniciar sesión. Intente nuevamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,11 +95,24 @@ export function LoginScreen({ onLogin, onGoogleLogin, onForgotPassword, onRegist
           </Pressable>
         </View>
 
+        {authError ? (
+          <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <Text className="text-sm text-red-600 text-center">{authError}</Text>
+          </View>
+        ) : null}
+
         <Pressable
           onPress={handleSubmit}
-          className="h-14 w-full rounded-xl bg-[#0D80AE] items-center justify-center mt-2"
+          disabled={isLoading}
+          className={`h-14 w-full rounded-xl items-center justify-center mt-2 ${
+            isLoading ? "bg-[#0D80AE]/70" : "bg-[#0D80AE]"
+          }`}
         >
-          <Text className="text-white text-base font-semibold">Iniciar sesión</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text className="text-white text-base font-semibold">Iniciar sesión</Text>
+          )}
         </Pressable>
 
         <View className="flex flex-row items-center gap-4">
