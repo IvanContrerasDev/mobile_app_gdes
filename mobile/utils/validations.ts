@@ -25,17 +25,30 @@ export function validateEmail(email: string): string | null {
   return null;
 }
 
+/**
+ * Reusable password validation.
+ * Enforces the system password policy:
+ * - minimo 8 caracteres
+ * - al menos una letra mayuscula
+ * - al menos una letra minuscula
+ * - al menos un numero
+ * - al menos un simbolo especial
+ * - sin espacios
+ *
+ * TODO: Reutilizar en Registro, Cambio de contraseña, Recuperación y backend.
+ */
 export function validatePassword(password: string): string | null {
   if (!password.trim()) return "Este campo es obligatorio";
   
   const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
   const hasNoSpaces = !/\s/.test(password);
   
-  if (!hasMinLength || !hasUppercase || !hasNumber || !hasSymbol || !hasNoSpaces) {
-    return "La contraseña debe tener al menos 8 caracteres, una mayúscula, un numero y un símbolo, sin espacios.";
+  if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSymbol || !hasNoSpaces) {
+    return "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un numero y un símbolo, sin espacios.";
   }
   return null;
 }
