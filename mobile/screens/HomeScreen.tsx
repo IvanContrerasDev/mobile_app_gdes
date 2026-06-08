@@ -8,6 +8,8 @@ import { isOnline } from "../services/networkService";
 import { getWorkplaces } from "../services/workplaceService";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favoriteWorkplaceService";
 import { saveRecentWorkplace, getRecentWorkplaceForCurrentPeriod } from "../services/recentWorkplaceService";
+import { saveUsedWorkplace, getUsedWorkplaces } from "../services/usedWorkplaceService";
+import { sortWorkplacesByRelevance } from "../utils/workplaceSorting";
 import { RegisterRequest } from "../types/api";
 import { Workplace } from "../types/workplace";
 
@@ -46,6 +48,10 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   // Favorite workplaces (IDs), persisted locally
   const [favorites, setFavorites] = useState<string[]>([]);
 
+  // Relevance data: last used in current period + previously used history
+  const [recentWorkplaceId, setRecentWorkplaceId] = useState<string | null>(null);
+  const [usedWorkplaceIds, setUsedWorkplaceIds] = useState<string[]>([]);
+
   // Validation and feedback state
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
@@ -58,18 +64,28 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     setIsLoadingWorkplaces(true);
     setWorkplacesError("");
     try {
-      const data = await getWorkplaces();
-      setWorkplaces(data);
-      setOrderedWorkplaces(data);
+      // Fetch workplaces and all relevance signals in parallel
+      const [data, recentId, favoriteIds, usedIds] = await Promise.all([
+        getWorkplaces(),
+        getRecentWorkplaceForCurrentPeriod(),
+        getFavorites(),
+        getUsedWorkplaces(),
+      ]);
 
-      // Preselect the last workplace used in the current time period (if any)
-      const recentId = await getRecentWorkplaceForCurrentPeriod();
+      setWorkplaces(data);
+      setFavorites(favoriteIds);
+      setRecentWorkplaceId(recentId);
+      setUsedWorkplaceIds(usedIds);
+
+      // Apply intelligent ordering before rendering the selector
+      const sorted = sortWorkplacesByRelevance(data, recentId, favoriteIds, usedIds);
+      setOrderedWorkplaces(sorted);
+
+      // Keep automatic preselection of the recent workplace for the current period
       if (recentId) {
         const recentWp = data.find((wp) => wp.id === recentId);
         if (recentWp) {
           setWorkplace(recentWp.name);
-          const others = data.filter((wp) => wp.id !== recentId);
-          setOrderedWorkplaces([recentWp, ...others]);
         }
       }
     } catch (error) {
@@ -81,14 +97,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
   useEffect(() => {
     loadWorkplaces();
-    loadFavorites();
   }, []);
-
-  // Load persisted favorites
-  const loadFavorites = async () => {
-    const stored = await getFavorites();
-    setFavorites(stored);
-  };
 
   // Toggle favorite state with immediate visual feedback + persistence
   const handleToggleFavorite = async (workplaceId: string) => {
@@ -115,12 +124,6 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
     setWorkplace(wpName);
     setIsDropdownOpen(false);
     setWorkplaceError("");
-    
-    const selectedWp = workplaces.find(wp => wp.name === wpName);
-    if (selectedWp) {
-      const others = workplaces.filter(wp => wp.name !== wpName);
-      setOrderedWorkplaces([selectedWp, ...others]);
-    }
   };
 
   const handleSelectAction = (action: ActionType) => {
@@ -216,6 +219,8 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         // Remember this workplace for the current time period
         if (workplace?.id) {
           await saveRecentWorkplace(workplace.id);
+          // Track in used-workplaces history for relevance ranking
+          await saveUsedWorkplace(workplace.id);
         }
 
         // Update working status based on action
@@ -315,13 +320,24 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => {
                 const isFav = favorites.includes(item.id);
+                const isRecent = recentWorkplaceId === item.id;
                 return (
                   <View className="px-4 py-4 border-b border-[#EDF2F5] flex-row items-center justify-between">
                     <Pressable
                       onPress={() => handleSelectWorkplace(item.name)}
-                      className="flex-1 flex-row items-center gap-2"
+                      className="flex-1 flex-row items-center gap-2 flex-wrap"
                     >
                       <Text className="text-sm text-[#0F172A]">{item.name}</Text>
+                      {isRecent && (
+                        <View className="px-2 py-0.5 rounded-full bg-[#0D80AE]/10">
+                          <Text className="text-[10px] font-medium text-[#0D80AE]">Ultimo utilizado</Text>
+                        </View>
+                      )}
+                      {isFav && (
+                        <View className="px-2 py-0.5 rounded-full bg-[#ED701E]/10">
+                          <Text className="text-[10px] font-medium text-[#ED701E]">Favorito</Text>
+                        </View>
+                      )}
                       {selectedWorkplace === item.name && (
                         <CheckIcon size={16} color="#0D80AE" />
                       )}
