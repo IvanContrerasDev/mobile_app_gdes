@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, ActivityIndicator } from "react-native";
 import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
-import { workplaces } from "../constants/data";
 import { useAppStore, ActionType } from "../store/useAppStore";
 import { registerEvent } from "../services/registerService";
 import { getCurrentLocation } from "../services/locationService";
 import { isOnline } from "../services/networkService";
+import { getWorkplaces } from "../services/workplaceService";
 import { RegisterRequest } from "../types/api";
+import { Workplace } from "../types/workplace";
 
 // TODO: Implementar almacenamiento offline y sincronización automática en una futura versión.
 // import { saveOfflineRegister } from "../services/offlineRegisterService";
@@ -31,16 +32,40 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
   // Local UI state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [orderedWorkplaces, setOrderedWorkplaces] = useState(workplaces);
   const [motivoAusencia, setMotivoAusencia] = useState("");
   const [showMotivoDropdown, setShowMotivoDropdown] = useState(false);
-  
+
+  // Workplaces state (local to Home, fetched from service)
+  const [workplaces, setWorkplaces] = useState<Workplace[]>([]);
+  const [orderedWorkplaces, setOrderedWorkplaces] = useState<Workplace[]>([]);
+  const [isLoadingWorkplaces, setIsLoadingWorkplaces] = useState(true);
+  const [workplacesError, setWorkplacesError] = useState("");
+
   // Validation and feedback state
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
   const [generalError, setGeneralError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
+
+  // Fetch workplaces on mount
+  const loadWorkplaces = async () => {
+    setIsLoadingWorkplaces(true);
+    setWorkplacesError("");
+    try {
+      const data = await getWorkplaces();
+      setWorkplaces(data);
+      setOrderedWorkplaces(data);
+    } catch (error) {
+      setWorkplacesError("No fue posible obtener los lugares de trabajo.\n\nPor favor, intente nuevamente.");
+    } finally {
+      setIsLoadingWorkplaces(false);
+    }
+  };
+
+  useEffect(() => {
+    loadWorkplaces();
+  }, []);
 
   const buttonText = {
     entrada: "Registrar entrada",
@@ -195,15 +220,36 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
       <View className="flex flex-col gap-2 mt-6">
         <Text className="text-sm font-semibold text-[#0F172A]">Lugar de trabajo</Text>
-        <Pressable
-          onPress={() => setIsDropdownOpen(true)}
-          className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center justify-between"
-        >
-          <Text className={selectedWorkplace ? "text-[#0F172A]" : "text-gray-400"}>
-            {selectedWorkplace || "Seleccionar lugar de trabajo"}
-          </Text>
-          <ChevronDownIcon size={20} color="#9CA3AF" />
-        </Pressable>
+
+        {isLoadingWorkplaces ? (
+          <View className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center gap-2">
+            <ActivityIndicator size="small" color="#0D80AE" />
+            <Text className="text-gray-400">Cargando lugares de trabajo...</Text>
+          </View>
+        ) : workplacesError ? (
+          <View className="flex flex-col gap-2">
+            <View className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <Text className="text-sm text-red-600">{workplacesError}</Text>
+            </View>
+            <Pressable
+              onPress={loadWorkplaces}
+              className="h-11 w-full rounded-xl border border-[#0D80AE] bg-white items-center justify-center"
+            >
+              <Text className="text-sm font-medium text-[#0D80AE]">Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => setIsDropdownOpen(true)}
+            className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center justify-between"
+          >
+            <Text className={selectedWorkplace ? "text-[#0F172A]" : "text-gray-400"}>
+              {selectedWorkplace || "Seleccionar lugar de trabajo"}
+            </Text>
+            <ChevronDownIcon size={20} color="#9CA3AF" />
+          </Pressable>
+        )}
+
         {workplaceError && (
           <Text className="text-xs text-red-500 mt-1">{workplaceError}</Text>
         )}
