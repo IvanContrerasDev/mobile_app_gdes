@@ -10,7 +10,7 @@ export interface LoginResult {
 
 // Mock credentials (MVP only)
 const MOCK_EMAIL = "empleado@gdes.com";
-const MOCK_PASSWORD = "123456";
+const MOCK_PASSWORD = "Gdes@2025";
 
 const MOCK_USER: AuthUser = {
   id: "usr-001",
