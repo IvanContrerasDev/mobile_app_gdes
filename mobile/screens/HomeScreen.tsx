@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, ActivityIndicator } from "react-native";
-import { ChevronDownIcon, CheckIcon, AttachIcon } from "../components/Icons";
+import { ChevronDownIcon, CheckIcon, AttachIcon, StarIcon } from "../components/Icons";
 import { useAppStore, ActionType } from "../store/useAppStore";
 import { registerEvent } from "../services/registerService";
 import { getCurrentLocation } from "../services/locationService";
 import { isOnline } from "../services/networkService";
 import { getWorkplaces } from "../services/workplaceService";
+import { getFavorites, addFavorite, removeFavorite } from "../services/favoriteWorkplaceService";
 import { RegisterRequest } from "../types/api";
 import { Workplace } from "../types/workplace";
 
@@ -41,6 +42,9 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   const [isLoadingWorkplaces, setIsLoadingWorkplaces] = useState(true);
   const [workplacesError, setWorkplacesError] = useState("");
 
+  // Favorite workplaces (IDs), persisted locally
+  const [favorites, setFavorites] = useState<string[]>([]);
+
   // Validation and feedback state
   const [workplaceError, setWorkplaceError] = useState("");
   const [actionError, setActionError] = useState("");
@@ -65,7 +69,29 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
   useEffect(() => {
     loadWorkplaces();
+    loadFavorites();
   }, []);
+
+  // Load persisted favorites
+  const loadFavorites = async () => {
+    const stored = await getFavorites();
+    setFavorites(stored);
+  };
+
+  // Toggle favorite state with immediate visual feedback + persistence
+  const handleToggleFavorite = async (workplaceId: string) => {
+    const isFav = favorites.includes(workplaceId);
+    // Optimistic UI update
+    setFavorites((prev) =>
+      isFav ? prev.filter((id) => id !== workplaceId) : [...prev, workplaceId]
+    );
+    // Persist
+    if (isFav) {
+      await removeFavorite(workplaceId);
+    } else {
+      await addFavorite(workplaceId);
+    }
+  };
 
   const buttonText = {
     entrada: "Registrar entrada",
@@ -270,17 +296,30 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
             <FlatList
               data={orderedWorkplaces}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => handleSelectWorkplace(item.name)}
-                  className="px-4 py-4 border-b border-[#EDF2F5] flex-row items-center justify-between"
-                >
-                  <Text className="text-sm text-[#0F172A]">{item.name}</Text>
-                  {selectedWorkplace === item.name && (
-                    <CheckIcon size={16} color="#0D80AE" />
-                  )}
-                </Pressable>
-              )}
+              renderItem={({ item }) => {
+                const isFav = favorites.includes(item.id);
+                return (
+                  <View className="px-4 py-4 border-b border-[#EDF2F5] flex-row items-center justify-between">
+                    <Pressable
+                      onPress={() => handleSelectWorkplace(item.name)}
+                      className="flex-1 flex-row items-center gap-2"
+                    >
+                      <Text className="text-sm text-[#0F172A]">{item.name}</Text>
+                      {selectedWorkplace === item.name && (
+                        <CheckIcon size={16} color="#0D80AE" />
+                      )}
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleToggleFavorite(item.id)}
+                      hitSlop={8}
+                      className="pl-3"
+                      accessibilityLabel={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+                    >
+                      <StarIcon size={20} color="#ED701E" filled={isFav} />
+                    </Pressable>
+                  </View>
+                );
+              }}
             />
           </View>
         </Pressable>
