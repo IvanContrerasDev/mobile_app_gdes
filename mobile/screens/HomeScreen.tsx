@@ -7,6 +7,7 @@ import { getCurrentLocation } from "../services/locationService";
 import { isOnline } from "../services/networkService";
 import { getWorkplaces } from "../services/workplaceService";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favoriteWorkplaceService";
+import { saveRecentWorkplace, getRecentWorkplaceForCurrentPeriod } from "../services/recentWorkplaceService";
 import { RegisterRequest } from "../types/api";
 import { Workplace } from "../types/workplace";
 
@@ -60,6 +61,17 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       const data = await getWorkplaces();
       setWorkplaces(data);
       setOrderedWorkplaces(data);
+
+      // Preselect the last workplace used in the current time period (if any)
+      const recentId = await getRecentWorkplaceForCurrentPeriod();
+      if (recentId) {
+        const recentWp = data.find((wp) => wp.id === recentId);
+        if (recentWp) {
+          setWorkplace(recentWp.name);
+          const others = data.filter((wp) => wp.id !== recentId);
+          setOrderedWorkplaces([recentWp, ...others]);
+        }
+      }
     } catch (error) {
       setWorkplacesError("No fue posible obtener los lugares de trabajo.\n\nPor favor, intente nuevamente.");
     } finally {
@@ -201,6 +213,11 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       const response = await registerEvent(request);
       
       if (response.success) {
+        // Remember this workplace for the current time period
+        if (workplace?.id) {
+          await saveRecentWorkplace(workplace.id);
+        }
+
         // Update working status based on action
         if (selectedAction === "entrada") {
           setWorkingStatus(true);
