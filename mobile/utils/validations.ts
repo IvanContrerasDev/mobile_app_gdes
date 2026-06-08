@@ -9,9 +9,9 @@ export function validateEmailOrLegajo(value: string): string | null {
     return null;
   }
   
-  const legajoRegex = /^\d{5,}$/;
+  const legajoRegex = /^\d+$/;
   if (!legajoRegex.test(value)) {
-    return "El legajo debe contener solo numeros (minimo 5 dígitos)";
+    return "El legajo debe contener solo numeros";
   }
   return null;
 }
@@ -66,9 +66,6 @@ export function validateLegajo(legajo: string): string | null {
   if (!legajo.trim()) return "Este campo es obligatorio";
   if (!/^\d+$/.test(legajo)) {
     return "El legajo debe contener solo numeros";
-  }
-  if (legajo.length < 5) {
-    return "El legajo debe tener al menos 5 dígitos";
   }
   return null;
 }
