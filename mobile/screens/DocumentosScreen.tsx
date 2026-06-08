@@ -2,7 +2,6 @@ import { useState } from "react";
 import { View, Text, Pressable, ScrollView, Modal, FlatList, Image, ActivityIndicator } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { UploadIcon, CloseIcon, SuccessCheckIcon, CheckIcon } from "../components/Icons";
-import { months } from "../constants/data";
 import { documentWorkplaces, DocumentUploadRequest } from "../types/document";
 import { uploadDocuments } from "../services/uploadDocumentService";
 import { isOnline } from "../services/networkService";
@@ -13,16 +12,41 @@ export function DocumentosScreen() {
   const [showPlanillaSuccess, setShowPlanillaSuccess] = useState(false);
   const [selectedWorkplace, setSelectedWorkplace] = useState("");
   const [showWorkplacePicker, setShowWorkplacePicker] = useState(false);
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [showImageOptions, setShowImageOptions] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
   // Documentos state
   const [showDocumentoSuccess, setShowDocumentoSuccess] = useState(false);
 
+  const takePhoto = async () => {
+    setShowImageOptions(false);
+
+    // Request camera permission
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      setUploadError("Se requiere permiso para acceder a la camara.");
+      return;
+    }
+
+    // Launch camera
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets) {
+      const uris = result.assets.map((asset) => asset.uri);
+      setSelectedImages((prev) => [...prev, ...uris]);
+      setUploadError("");
+    }
+  };
+
   const pickImages = async () => {
+    setShowImageOptions(false);
+
     // Request permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -49,17 +73,8 @@ export function DocumentosScreen() {
     setSelectedImages((prev) => prev.filter((img) => img !== uri));
   };
 
-  const toggleMonth = (month: string) => {
-    setSelectedMonths((prev) =>
-      prev.includes(month)
-        ? prev.filter((m) => m !== month)
-        : [...prev, month]
-    );
-  };
-
   const resetPlanillaForm = () => {
     setSelectedWorkplace("");
-    setSelectedMonths([]);
     setSelectedImages([]);
     setUploadError("");
   };
@@ -79,7 +94,7 @@ export function DocumentosScreen() {
     // Build request
     const request: DocumentUploadRequest = {
       workplace: selectedWorkplace,
-      months: selectedMonths,
+      months: [],
       files: selectedImages,
       uploadedAt: new Date().toISOString(),
     };
@@ -103,7 +118,7 @@ export function DocumentosScreen() {
     setShowDocumentoSuccess(true);
   };
 
-  const canUploadPlanilla = selectedWorkplace !== "" && selectedMonths.length > 0 && selectedImages.length > 0;
+  const canUploadPlanilla = selectedImages.length > 0;
 
   return (
     <View className="flex-1 pt-10 px-6 pb-4">
@@ -156,9 +171,9 @@ export function DocumentosScreen() {
 
             <ScrollView style={{ maxHeight: 450 }} showsVerticalScrollIndicator={false}>
               <View className="flex flex-col gap-4">
-                {/* Workplace Selector */}
+                {/* Workplace Selector (optional) */}
                 <View className="flex flex-col gap-2">
-                  <Text className="text-sm font-medium text-[#0F172A]">Lugar de trabajo *</Text>
+                  <Text className="text-sm font-medium text-[#0F172A]">Lugar de trabajo</Text>
                   <Pressable
                     onPress={() => setShowWorkplacePicker(true)}
                     className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center justify-between"
@@ -169,26 +184,11 @@ export function DocumentosScreen() {
                   </Pressable>
                 </View>
 
-                {/* Months Multi-select */}
-                <View className="flex flex-col gap-2">
-                  <Text className="text-sm font-medium text-[#0F172A]">Meses comprendidos *</Text>
-                  <Pressable
-                    onPress={() => setShowMonthPicker(true)}
-                    className="min-h-[48px] w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-3 flex-row items-center flex-wrap"
-                  >
-                    {selectedMonths.length > 0 ? (
-                      <Text className="text-[#0F172A]">{selectedMonths.join(", ")}</Text>
-                    ) : (
-                      <Text className="text-gray-400">Seleccionar meses...</Text>
-                    )}
-                  </Pressable>
-                </View>
-
                 {/* Image Selection */}
                 <View className="flex flex-col gap-2">
                   <Text className="text-sm font-medium text-[#0F172A]">Imagenes *</Text>
                   <Pressable
-                    onPress={pickImages}
+                    onPress={() => setShowImageOptions(true)}
                     className="h-12 w-full rounded-xl border border-dashed border-[#0D80AE] bg-[#0D80AE]/5 flex-row items-center justify-center gap-2"
                   >
                     <UploadIcon size={16} color="#0D80AE" />
@@ -290,36 +290,36 @@ export function DocumentosScreen() {
         </Pressable>
       </Modal>
 
-      {/* Month Picker Modal (Multi-select) */}
-      <Modal visible={showMonthPicker} transparent animationType="slide">
-        <Pressable 
+      {/* Image Options Action Sheet */}
+      <Modal visible={showImageOptions} transparent animationType="slide">
+        <Pressable
           className="flex-1 bg-black/50 justify-end"
-          onPress={() => setShowMonthPicker(false)}
+          onPress={() => setShowImageOptions(false)}
         >
-          <View className="bg-white rounded-t-2xl max-h-[60%]">
-            <View className="p-4 border-b border-[#EDF2F5] flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-[#0F172A]">
-                Seleccionar meses
+          <View className="bg-white rounded-t-2xl p-4 pb-8">
+            <View className="p-2 border-b border-[#EDF2F5]">
+              <Text className="text-base font-semibold text-[#0F172A] text-center">
+                Agregar imagen
               </Text>
-              <Pressable onPress={() => setShowMonthPicker(false)}>
-                <Text className="text-sm font-medium text-[#0D80AE]">Listo</Text>
-              </Pressable>
             </View>
-            <FlatList
-              data={months}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => toggleMonth(item)}
-                  className="px-4 py-4 border-b border-[#EDF2F5] flex-row items-center justify-between"
-                >
-                  <Text className="text-sm text-[#0F172A]">{item}</Text>
-                  {selectedMonths.includes(item) && (
-                    <CheckIcon size={16} color="#0D80AE" />
-                  )}
-                </Pressable>
-              )}
-            />
+            <Pressable
+              onPress={takePhoto}
+              className="py-4 border-b border-[#EDF2F5] items-center"
+            >
+              <Text className="text-base text-[#0D80AE] font-medium">Tomar foto</Text>
+            </Pressable>
+            <Pressable
+              onPress={pickImages}
+              className="py-4 border-b border-[#EDF2F5] items-center"
+            >
+              <Text className="text-base text-[#0D80AE] font-medium">Elegir desde galeria</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowImageOptions(false)}
+              className="py-4 items-center"
+            >
+              <Text className="text-base text-[#9CA3AF] font-medium">Cancelar</Text>
+            </Pressable>
           </View>
         </Pressable>
       </Modal>
