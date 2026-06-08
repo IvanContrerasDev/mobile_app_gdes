@@ -2,7 +2,6 @@ import { useState } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { UserAvatarIcon } from "../components/Icons";
 import { userProfile } from "../constants/data";
-import { useAppStore } from "../store/useAppStore";
 
 interface PerfilScreenProps {
   onLogout: () => void;
@@ -10,7 +9,6 @@ interface PerfilScreenProps {
 
 export function PerfilScreen({ onLogout }: PerfilScreenProps) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const setUser = useAppStore((state) => state.setUser);
 
   // Avatar: show photo if it exists, otherwise show the initial.
   const photoUri: string | null = null; // mock: no photo uploaded
@@ -18,9 +16,7 @@ export function PerfilScreen({ onLogout }: PerfilScreenProps) {
 
   const handleConfirmLogout = () => {
     setShowLogoutModal(false);
-    // Clear current user from Zustand store
-    setUser(null);
-    // Navigate to Login
+    // Clear session via auth store (handled by parent navigator).
     onLogout();
   };
 
