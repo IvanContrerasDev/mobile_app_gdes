@@ -9,7 +9,6 @@ import {
   RegisterSuccessScreen,
   GoogleSuccessScreen,
   EmailSentScreen,
-  ForgotSuccessScreen,
 } from "../screens/SuccessScreens";
 
 // Components
@@ -26,8 +25,7 @@ type AuthStep =
   | "registerSuccess"
   | "googleSuccess"
   | "verifyCodeGoogle"
-  | "forgotPassword"
-  | "forgotSuccess";
+  | "forgotPassword";
 
 /**
  * AuthNavigator
@@ -109,14 +107,7 @@ export function AuthNavigator() {
       )}
 
       {step === "forgotPassword" && (
-        <ForgotPasswordScreen
-          onSend={() => setStep("forgotSuccess")}
-          onBack={() => setStep("login")}
-        />
-      )}
-
-      {step === "forgotSuccess" && (
-        <ForgotSuccessScreen onBack={() => setStep("login")} />
+        <ForgotPasswordScreen onBack={() => setStep("login")} />
       )}
     </>
   );
