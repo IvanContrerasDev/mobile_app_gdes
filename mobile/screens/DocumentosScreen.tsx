@@ -278,7 +278,10 @@ export function DocumentosScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* SECTION 1: PLANILLAS */}
         <View className="mt-16">
-          <Text className="text-lg font-bold text-[#0F172A] mb-3">Planillas</Text>
+          <Text className="text-lg font-bold text-[#0F172A] mb-1">Planillas</Text>
+          <Text className="text-sm text-gray-500 mb-3">
+            Suba una foto de la planilla utilizada cuando no pudo registrar su ingreso o salida desde la aplicación.
+          </Text>
           <Pressable
             onPress={() => setShowPlanillaModal(true)}
             className="h-12 rounded-xl bg-[#0D80AE] flex-row items-center justify-center gap-2"
@@ -293,7 +296,7 @@ export function DocumentosScreen() {
         <View className="mt-12">
           <Text className="text-lg font-bold text-[#0F172A] mb-1">Documentos</Text>
           <Text className="text-sm text-gray-500 mb-3">
-            Cargue documentación de contingencia cuando no haya podido registrar digitalmente.
+            Cargar documentos que serán almacenados en su legajo de empleado.
           </Text>
           <Pressable
             onPress={openDocModal}
