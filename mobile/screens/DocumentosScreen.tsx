@@ -222,7 +222,7 @@ export function DocumentosScreen() {
     const online = await isOnline();
     if (!online) {
       setIsUploadingDoc(false);
-      setDocError("No posee conexion a Internet.\n\nPara enviar documentacion debe conectarse a una red e intentar nuevamente.\n\nSi necesita registrar asistencia utilice la planilla fisica de contingencia.");
+      setDocError("No posee conexion a Internet.\n\nPara enviar documentacion debe conectarse a una red e intentar nuevamente.\n\n");
       return;
     }
 
