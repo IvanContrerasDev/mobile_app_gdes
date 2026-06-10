@@ -6,8 +6,6 @@ import { UploadIcon, CloseIcon, SuccessCheckIcon, CheckIcon } from "../component
 import { documentWorkplaces, DocumentUploadRequest, SelectedFile, ALLOWED_EXTENSIONS, ContingencyUploadRequest } from "../types/document";
 import { uploadDocuments as uploadPlanilla } from "../services/uploadDocumentService";
 import { uploadDocuments } from "../services/documentService";
-import { getWorkplaces } from "../services/workplaceService";
-import { Workplace } from "../types/workplace";
 import { isOnline } from "../services/networkService";
 
 // Format a byte size into a human readable string.
@@ -43,12 +41,6 @@ export function DocumentosScreen() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [showDocSuccess, setShowDocSuccess] = useState(false);
   const [docFiles, setDocFiles] = useState<SelectedFile[]>([]);
-  const [docWorkplaces, setDocWorkplaces] = useState<Workplace[]>([]);
-  const [docWorkplaceId, setDocWorkplaceId] = useState<string | null>(null);
-  const [docWorkplaceName, setDocWorkplaceName] = useState("");
-  const [showDocWorkplacePicker, setShowDocWorkplacePicker] = useState(false);
-  const [isLoadingDocWorkplaces, setIsLoadingDocWorkplaces] = useState(false);
-  const [docWorkplacesError, setDocWorkplacesError] = useState("");
   const [showDocFileOptions, setShowDocFileOptions] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [docError, setDocError] = useState("");
@@ -132,21 +124,6 @@ export function DocumentosScreen() {
   // ---------- Contingency document handlers ----------
   const openDocModal = () => {
     setShowDocModal(true);
-    loadDocWorkplaces();
-  };
-
-  // Load workplaces using the same service/logic as Home.
-  const loadDocWorkplaces = async () => {
-    setIsLoadingDocWorkplaces(true);
-    setDocWorkplacesError("");
-    try {
-      const data = await getWorkplaces();
-      setDocWorkplaces(data);
-    } catch (error) {
-      setDocWorkplacesError("No fue posible obtener los lugares de trabajo.");
-    } finally {
-      setIsLoadingDocWorkplaces(false);
-    }
   };
 
   // Select a document/file from gallery or storage.
@@ -227,8 +204,6 @@ export function DocumentosScreen() {
 
   const resetDocForm = () => {
     setDocFiles([]);
-    setDocWorkplaceId(null);
-    setDocWorkplaceName("");
     setDocError("");
   };
 
@@ -252,7 +227,7 @@ export function DocumentosScreen() {
     }
 
     const request: ContingencyUploadRequest = {
-      workplaceId: docWorkplaceId,
+      workplaceId: null,
       files: docFiles,
       uploadedAt: new Date().toISOString(),
     };
@@ -479,36 +454,8 @@ export function DocumentosScreen() {
 
             <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
               <View className="flex flex-col gap-4">
-                {/* Workplace selector (optional) - same logic as Home */}
-                <View className="flex flex-col gap-2">
-                  <Text className="text-sm font-medium text-[#0F172A]">Lugar de trabajo (opcional)</Text>
-                  {isLoadingDocWorkplaces ? (
-                    <View className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center gap-2">
-                      <ActivityIndicator size="small" color="#0D80AE" />
-                      <Text className="text-gray-400">Cargando lugares de trabajo...</Text>
-                    </View>
-                  ) : docWorkplacesError ? (
-                    <Pressable
-                      onPress={loadDocWorkplaces}
-                      className="h-12 w-full rounded-xl border border-[#0D80AE] bg-white items-center justify-center"
-                    >
-                      <Text className="text-sm font-medium text-[#0D80AE]">Reintentar</Text>
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      onPress={() => setShowDocWorkplacePicker(true)}
-                      className="h-12 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 flex-row items-center justify-between"
-                    >
-                      <Text className={docWorkplaceName ? "text-[#0F172A]" : "text-gray-400"}>
-                        {docWorkplaceName || "Seleccionar..."}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
-
                 {/* File selection */}
                 <View className="flex flex-col gap-2">
-                  <Text className="text-sm font-medium text-[#0F172A]">Archivos *</Text>
                   <Pressable
                     onPress={() => setShowDocFileOptions(true)}
                     className="h-12 w-full rounded-xl border border-dashed border-[#0D80AE] bg-[#0D80AE]/5 flex-row items-center justify-center gap-2"
@@ -581,36 +528,6 @@ export function DocumentosScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
-
-      {/* Documentos Workplace Picker Modal */}
-      <Modal visible={showDocWorkplacePicker} transparent animationType="slide">
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setShowDocWorkplacePicker(false)}>
-          <View className="bg-white rounded-t-2xl max-h-[50%]">
-            <View className="p-4 border-b border-[#EDF2F5]">
-              <Text className="text-lg font-semibold text-[#0F172A] text-center">
-                Seleccionar lugar de trabajo
-              </Text>
-            </View>
-            <FlatList
-              data={docWorkplaces}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    setDocWorkplaceId(item.id);
-                    setDocWorkplaceName(item.name);
-                    setShowDocWorkplacePicker(false);
-                  }}
-                  className="px-4 py-4 border-b border-[#EDF2F5] flex-row items-center justify-between"
-                >
-                  <Text className="text-sm text-[#0F172A]">{item.name}</Text>
-                  {docWorkplaceId === item.id && <CheckIcon size={16} color="#0D80AE" />}
-                </Pressable>
-              )}
-            />
-          </View>
-        </Pressable>
       </Modal>
 
       {/* Documentos File Options Action Sheet */}
