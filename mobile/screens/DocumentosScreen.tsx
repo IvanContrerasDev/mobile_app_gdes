@@ -271,7 +271,7 @@ export function DocumentosScreen() {
         <View className="mt-12">
           <Text className="text-lg font-bold text-[#0F172A] mb-1">Documentos</Text>
           <Text className="text-sm text-gray-500 mb-3">
-            Cargar documentos que serán almacenados en su legajo de empleado.
+            Cargar documentos que serán almacenados en su legajo personal
           </Text>
           <Pressable
             onPress={openDocModal}
