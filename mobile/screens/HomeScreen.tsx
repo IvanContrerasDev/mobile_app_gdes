@@ -238,7 +238,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         onRegister();
       } else {
         // Handle API error response
-        setGeneralError(response.message + "\n\nSi el problema persiste, utilice la planilla física de contingencia.");
+        setGeneralError(response.message + "\n\nSi el problema persiste, utilice la planilla física correspondiente a su lugar de trabajo.");
       }
       
     } catch (error) {
