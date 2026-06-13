@@ -176,7 +176,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       setLoadingMessage("");
       
       // Show detailed location error message
-      setGeneralError("No fue posible obtener su ubicación actual.\n\nVerifique que el GPS esté habilitado e intente nuevamente.\n\nSi el problema persiste o no puede resolverlo, utilice la planilla física de contingencia para registrar su jornada laboral.");
+      setGeneralError("No fue posible obtener su ubicación actual.\n\nVerifique que el GPS esté habilitado e intente nuevamente.\n\nSi el problema persiste o no puede resolverlo, utilice la planilla física para registrar su jornada laboral.");
       return;
     }
     
