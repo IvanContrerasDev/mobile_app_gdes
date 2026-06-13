@@ -243,7 +243,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       
     } catch (error) {
       // Fallback error handling with clear instructions
-      setGeneralError("No fue posible completar el registro debido a un error de comunicación con el servidor.\n\nPor favor, verifique su conexión e intente nuevamente.\n\nSi el problema persiste, utilice la planilla física de contingencia.");
+      setGeneralError("No fue posible completar el registro debido a un error de comunicación con el servidor.\n\nPor favor, verifique su conexión e intente nuevamente.\n\nSi el problema persiste, utilice la planilla física.");
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
