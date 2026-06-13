@@ -190,7 +190,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
       setLoadingMessage("");
       
       // TODO: Implementar almacenamiento offline y sincronización automática en una futura versión.
-      setGeneralError("No posee conexión a Internet.\n\nPor favor, conéctese a una red e intente nuevamente.\n\nSi no puede realizar el registro digital, utilice la planilla física de contingencia correspondiente a su lugar de trabajo.");
+      setGeneralError("No posee conexión a Internet.\n\nPor favor, conéctese a una red e intente nuevamente.\n\nSi no puede realizar el registro digital, utilice la planilla física correspondiente a su lugar de trabajo.");
       return;
     }
     
