@@ -43,6 +43,14 @@ export function ChevronDownIcon({ size = 24, color = "currentColor", strokeWidth
   );
 }
 
+export function ChevronLeftIcon({ size = 24, color = "currentColor", strokeWidth = 2 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <Polyline points="15 18 9 12 15 6" />
+    </Svg>
+  );
+}
+
 export function UserAvatarIcon({ size = 24 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

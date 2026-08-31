@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, Pressable, ScrollView, Image, Modal, FlatList, KeyboardAvoidingView, Platform } from "react-native";
 import { InputWithError } from "../components/InputWithError";
-import { ChevronDownIcon, CheckIcon } from "../components/Icons";
+import { ChevronDownIcon, ChevronLeftIcon, CheckIcon } from "../components/Icons";
 import { validateEmail, validatePassword, validatePhone, validateLegajo, validateDNI, validateRequired } from "../utils/validations";
 import { provincias } from "../constants/data";
 
@@ -58,6 +58,17 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+      <Pressable
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="Volver al inicio de sesión"
+        hitSlop={8}
+        className="self-start flex-row items-center gap-1"
+      >
+        <ChevronLeftIcon size={20} color="#0D80AE" />
+        <Text className="text-sm font-medium text-[#0D80AE]">Volver</Text>
+      </Pressable>
+
       <View className="flex flex-col items-center gap-3">
         <View className="w-[100px] h-[100px]">
           <Image
