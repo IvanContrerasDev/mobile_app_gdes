@@ -52,9 +52,14 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
       className="flex-1"
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
     >
-      <ScrollView 
-        className="flex-1 px-6 py-6" 
-        contentContainerStyle={{ flexGrow: 1 }}
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 24,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
