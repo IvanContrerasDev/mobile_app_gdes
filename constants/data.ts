@@ -9,11 +9,11 @@ export const workplaces = [
 ];
 
 export const documents = [
-  { id: "1", name: "planilla_enero_01.jpg", date: "15 Ene 2024", status: "Cargado", month: "Enero" },
-  { id: "2", name: "planilla_enero_02.jpg", date: "16 Ene 2024", status: "Pendiente", month: "Enero" },
-  { id: "3", name: "planilla_febrero_01.jpg", date: "01 Feb 2024", status: "Cargado", month: "Febrero" },
-  { id: "4", name: "planilla_febrero_02.jpg", date: "05 Feb 2024", status: "Cargado", month: "Febrero" },
-  { id: "5", name: "planilla_marzo_01.jpg", date: "10 Mar 2024", status: "Pendiente", month: "Marzo" },
+  { id: "1", name: "planilla_enero_01.jpg", date: "15/01/2024", status: "Cargado", month: "Enero" },
+  { id: "2", name: "planilla_enero_02.jpg", date: "16/01/2024", status: "Pendiente", month: "Enero" },
+  { id: "3", name: "planilla_febrero_01.jpg", date: "01/02/2024", status: "Cargado", month: "Febrero" },
+  { id: "4", name: "planilla_febrero_02.jpg", date: "05/02/2024", status: "Cargado", month: "Febrero" },
+  { id: "5", name: "planilla_marzo_01.jpg", date: "10/03/2024", status: "Pendiente", month: "Marzo" },
 ];
 
 export const months = [
@@ -24,8 +24,8 @@ export const months = [
 export const userProfile = {
   nombre: "Gina",
   apellido: "Tini",
-  fechaNacimiento: "1990-05-15",
-  fechaInicioContrato: "2024-01-10",
+  fechaNacimiento: "15/05/1990",
+  fechaInicioContrato: "10/01/2024",
   dni: "32.456.789",
   cuil: "27-32456789-4",
   legajo: "EMP-2024-0156",
