@@ -37,14 +37,18 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
   const [showSitePicker, setShowSitePicker] = useState(false);
 
   const keepFocusedFieldVisible = (event: FocusEvent) => {
+    const focusedFieldHandle = event.target;
+
+    if (focusedFieldHandle == null) return;
+
     requestAnimationFrame(() => {
-      scrollViewRef.current
-        ?.getScrollResponder()
-        ?.scrollResponderScrollNativeHandleToKeyboard(
-          event.target,
-          24,
-          true,
-        );
+      const scrollResponder = scrollViewRef.current?.getScrollResponder();
+
+      scrollResponder?.scrollResponderScrollNativeHandleToKeyboard(
+        focusedFieldHandle,
+        24,
+        true,
+      );
     });
   };
 
