@@ -2,8 +2,8 @@
 
 ## Stack
 
-- **Expo** `~55` con `expo-router` como entrypoint (`package.json`, `main: expo-router/entry`).
-- **React** `19.2.0`, **React Native** `0.83.4`, New Architecture habilitada (`app.json`).
+- **Expo** `~57` con `expo-router` como entrypoint (`package.json`, `main: expo-router/entry`).
+- **React** `19.2.3`, **React Native** `0.86.3`, New Architecture habilitada (`app.json`).
 - **NativeWind 4** + Tailwind 3 para estilos (`babel.config.js`, `tailwind.config.js`, `global.css`).
 - **Zustand 4** para estado; `zustand/middleware` persist + AsyncStorage para sesión.
 - **Expo modules**: `expo-location`, `expo-image-picker`, `expo-document-picker`, `expo-linking`.

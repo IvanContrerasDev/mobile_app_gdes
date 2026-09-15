@@ -8,7 +8,7 @@ App Expo/React Native para empleados: autenticación, registro de entrada/salida
 
 ## Stack
 
-Expo ~55 + expo-router, React 19.2, RN 0.83 (New Architecture), NativeWind 4 + Tailwind 3, Zustand 4, TypeScript estricto (alias `@/*`).
+Expo ~57 + expo-router, React 19.2, RN 0.86 (New Architecture), NativeWind 4 + Tailwind 3, Zustand 4, TypeScript estricto (alias `@/*`).
 
 ## Reglas
 
