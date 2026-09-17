@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "descripcion": "Backlog de features de mobile_app_gdes. El leader local es el único que modifica estados. Estados: pending | in_progress | done. Una sola feature puede estar in_progress a la vez.",
+  "features": [
+    {
+      "id": "F-010",
+      "titulo": "Mobile: migración de mocks a contratos reales del backend",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": null,
+      "criterios": [
+        "AuthUser en inglés con role; tokens en SecureStore; interceptor de refresh",
+        "RegisterRequest → POST /attendance/events con clientRequestId y absenceReason",
+        "DocumentUploadRequest.workplace → workplaceId; respuestas con envoltorio { data }",
+        "isWorking derivado de GET /attendance/status; sync offline activada"
+      ]
+    }
+  ]
+}

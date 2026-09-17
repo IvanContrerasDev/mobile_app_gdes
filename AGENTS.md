@@ -12,7 +12,8 @@ Expo ~57 + expo-router, React 19.2, RN 0.86 (New Architecture), NativeWind 4 + T
 
 ## Reglas
 
-- Este repo es parte del sistema GdeS; la orquestación y los contratos entre apps viven en el repo raíz (`../docs/arquitectura/contratos-api.md`, que manda sobre supuestos locales).
+- Este repo es parte del sistema GdeS; los contratos entre apps viven en `docs/arquitectura/contratos-api.md` (SYNCED, manda sobre supuestos locales).
 - Las skills específicas de este stack están en `.agents/skills/` — leerlas antes de implementar.
-- Quien trabaja acá es `implementer-mobile`, despachado por el leader del repo raíz. Documentar el trabajo en `../progress/mobile/current.md`.
+- Este repo es autocontenido: tiene su propio `leader` (`kimi --agent leader`), `reviewer` e `implementer-mobile` en `.agents/agents/`, su backlog en `feature_list.json` y su estado en `progress/`.
+- Los archivos marcados `SYNCED-FROM-TEMPLATE` son de solo lectura: los cambios se proponen en `docs/changes_proposals/` y los propaga el orchestrator de GdesProject.
 - No hay backend real: los servicios simulan latencia para facilitar el reemplazo por API (`docs/05-servicios-datos-y-contratos.md`).
