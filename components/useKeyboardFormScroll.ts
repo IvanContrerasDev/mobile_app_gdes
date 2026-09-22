@@ -25,7 +25,8 @@ export function useKeyboardFormScroll() {
       scrollViewRef.current?.getNativeScrollRef()?.measureInWindow((_x, viewportTop, _width, viewportHeight) => {
         if (revision.current !== currentRevision || keyboardTop.current === null) return;
         const viewportBottom = viewportTop + viewportHeight;
-        const visibleBottom = Math.min(viewportBottom, keyboardTop.current);
+        const visibleBottom = Math.min(viewportBottom, (keyboardTop.current*0.95));
+        // agrego 0.95% para dejar un espacio entre el teclado y el campo
         // Solo compensar la porción que el KeyboardAvoidingView padre no haya reducido.
         // Sin este espacio, el scroll llega al final antes de descubrir los últimos campos.
         setBottomOverlap(Math.max(0, Math.ceil(viewportBottom - visibleBottom)));

@@ -242,7 +242,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           {...fieldProps("domicilio", "provincia")}
           label="Domicilio"
           multiline
-          style={{ height: 144, paddingTop: 12, paddingBottom: 12, textAlignVertical: "top" }}
+          style={{ height: 90, paddingTop: 12, paddingBottom: 12, textAlignVertical: "top" }}
           placeholder="Tu dirección completa"
           value={domicilio}
           onChangeText={setDomicilio}
