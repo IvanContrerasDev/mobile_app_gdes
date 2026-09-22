@@ -61,6 +61,16 @@ export function UserAvatarIcon({ size = 24 }: IconProps) {
   );
 }
 
+export function EyeIcon({ size = 24, color = "#000000", strokeWidth = 2, hidden = false }: IconProps & { hidden?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12" />
+      <Circle cx="12" cy="12" r="3" />
+      {hidden ? <Line x1="3" y1="3" x2="21" y2="21" /> : null}
+    </Svg>
+  );
+}
+
 export function CheckIcon({ size = 24, color = "currentColor", strokeWidth = 3 }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
