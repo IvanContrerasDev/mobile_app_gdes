@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,11 @@ import {
   Image,
   Modal,
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   type FocusEvent,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { InputWithError } from "../components/InputWithError";
 import { ChevronDownIcon, ChevronLeftIcon, CheckIcon } from "../components/Icons";
 import { validateEmail, validatePassword, validatePhone, validateLegajo, validateDNI, validateRequired } from "../utils/validations";
@@ -36,20 +37,59 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [showSitePicker, setShowSitePicker] = useState(false);
 
-  const keepFocusedFieldVisible = (event: FocusEvent) => {
-    const focusedFieldHandle = event.target;
+  const focusedFieldRef = useRef<FocusEvent["target"] | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
+  const insets = useSafeAreaInsets();
 
-    if (focusedFieldHandle == null) return;
+  const cancelPendingScroll = useCallback(() => {
+    if (scrollFrameRef.current !== null) {
+      cancelAnimationFrame(scrollFrameRef.current);
+      scrollFrameRef.current = null;
+    }
+  }, []);
 
-    requestAnimationFrame(() => {
-      const scrollResponder = scrollViewRef.current?.getScrollResponder();
+  const scrollFocusedFieldIntoView = useCallback(() => {
+    cancelPendingScroll();
+    if (Platform.OS === "web" || !Keyboard.isVisible()) return;
 
-      scrollResponder?.scrollResponderScrollNativeHandleToKeyboard(
-        focusedFieldHandle,
-        24,
-        true,
-      );
+    // Esperar al layout reducido: onFocus ocurre antes de que aparezca el teclado.
+    scrollFrameRef.current = requestAnimationFrame(() => {
+      scrollFrameRef.current = null;
+      const focusedField = focusedFieldRef.current;
+      if (focusedField == null || !Keyboard.isVisible()) return;
+
+      scrollViewRef.current
+        ?.getScrollResponder()
+        ?.scrollResponderScrollNativeHandleToKeyboard(
+          focusedField,
+          // El responder usa coordenadas de pantalla; el scroll empieza bajo el safe area.
+          24 + insets.top,
+          true,
+        );
     });
+  }, [cancelPendingScroll, insets.top]);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", scrollFocusedFieldIntoView);
+    const frameSubscription = Keyboard.addListener("keyboardDidChangeFrame", scrollFocusedFieldIntoView);
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", cancelPendingScroll);
+
+    return () => {
+      showSubscription.remove();
+      frameSubscription.remove();
+      hideSubscription.remove();
+      cancelPendingScroll();
+    };
+  }, [cancelPendingScroll, scrollFocusedFieldIntoView]);
+
+  const keepFocusedFieldVisible = (event: FocusEvent) => {
+    focusedFieldRef.current = event.target;
+    scrollFocusedFieldIntoView();
+  };
+
+  const clearFocusedField = () => {
+    focusedFieldRef.current = null;
+    cancelPendingScroll();
   };
 
   const handleSubmit = () => {
@@ -75,24 +115,21 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <ScrollView
+      ref={scrollViewRef}
       className="flex-1"
-      keyboardVerticalOffset={0}
+      onLayout={scrollFocusedFieldIntoView}
+      onContentSizeChange={scrollFocusedFieldIntoView}
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 24,
+      }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+      showsVerticalScrollIndicator={false}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        className="flex-1"
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingHorizontal: 24,
-          paddingTop: 24,
-          paddingBottom: 24,
-        }}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
-        showsVerticalScrollIndicator={false}
-      >
       <Pressable
         onPress={onBack}
         accessibilityRole="button"
@@ -123,6 +160,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           onChangeText={setNombre}
           error={errors.nombre}
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Apellido"
@@ -131,6 +169,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           onChangeText={setApellido}
           error={errors.apellido}
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Legajo (solo numeros)"
@@ -140,6 +179,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           error={errors.legajo}
           keyboardType="numeric"
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="DNI (sin puntos ni espacios)"
@@ -149,6 +189,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           error={errors.dni}
           keyboardType="numeric"
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Email"
@@ -158,6 +199,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           error={errors.email}
           keyboardType="email-address"
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Contraseña"
@@ -167,6 +209,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           error={errors.password}
           secureTextEntry
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Celular (solo numeros)"
@@ -176,6 +219,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           error={errors.telefono}
           keyboardType="phone-pad"
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         <InputWithError
           label="Domicilio"
@@ -184,6 +228,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           onChangeText={setDomicilio}
           error={errors.domicilio}
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
         
         <View className="flex flex-col gap-1">
@@ -241,6 +286,7 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           onChangeText={setFechaNacimiento}
           error={errors.fechaNacimiento}
           onFocus={keepFocusedFieldVisible}
+          onBlur={clearFocusedField}
         />
 
         <Pressable
@@ -257,7 +303,6 @@ export function RegisterScreen({ onRegister, onBack }: RegisterScreenProps) {
           </Pressable>
         </View>
       </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </ScrollView>
   );
 }
