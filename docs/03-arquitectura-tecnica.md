@@ -90,13 +90,13 @@ flowchart LR
  APP --> GPS[expo-location]
  APP --> FS[Picker/Cámara]
  APP --> NET[NetInfo]
- APP -. pendiente .-> API[(Backend inexistente)]
+ APP -. pendiente .-> API[(API de negocio pendiente)]
 ```
 
 ## Decisiones observadas
 
 - Servicios asíncronos que simulan latencia para facilitar el reemplazo por API real.
-- Contratos tipados (`types/api.ts`, `types/document.ts`) ya modelan payloads previstos.
+- Tipos locales (`types/api.ts`, `types/document.ts`) describen el mock; requieren migración al contrato aprobado (ver doc 05).
 - Separación de responsabilidades UI/servicios/estado consistente pese a ser mock.
 
 ## Riesgos estructurales

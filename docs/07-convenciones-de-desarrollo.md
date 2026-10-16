@@ -50,14 +50,14 @@ Nota: coexisten `store/` y `stores/`. Mantener el destino correcto: sesión en `
 ## Servicios
 
 - Firma `async` que retorna una `Promise` tipada del contrato en `types/`.
-- Simular latencia mientras sea mock; al integrar API conservar la firma pública.
+- Simular latencia mientras sea mock; al integrar API migrar tipos y consumidores al contrato común (doc 05); las firmas mock no son contrato externo.
 - Servicios locales encapsulan AsyncStorage y degradan a valores neutros ante error.
 
 ## Extensión recomendada
 
 - Nuevos endpoints: definir tipo en `types/`, servicio en `services/`, consumo en pantalla.
 - Reutilizar `utils/validations.ts` en lugar de duplicar reglas.
-- Al reemplazar mocks, mantener contratos y unificar catálogos de lugares.
+- Al reemplazar mocks, cumplir el contrato común y unificar catálogos de lugares.
 
 ## Convenciones React Native aplicables
 

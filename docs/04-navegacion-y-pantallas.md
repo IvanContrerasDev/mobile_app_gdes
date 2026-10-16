@@ -36,7 +36,7 @@ Pasos: `home`, `homeSuccess`, `documentos`, `perfil`. `AppHeader` se muestra sol
 | Pantalla | Archivo | Rol | Estado |
 |---|---|---|---|
 | Login | `screens/LoginScreen.tsx` | Identificador + password, Google, links | Mock auth |
-| Registro | `screens/RegisterScreen.tsx` | Alta con provincia y site modales | Parcial |
+| Registro | `screens/RegisterScreen.tsx` | Alta con confirmación de contraseña, fecha DD/MM/AAAA y selector de provincia (estado `site`) | Parcial |
 | Verificación OTP | `screens/VerifyCodeScreen.tsx` | Código WhatsApp | Mock |
 | Recuperación | `screens/ForgotPasswordScreen.tsx` | Solicitud por email | Mock |
 | Éxitos | `screens/SuccessScreens.tsx` | Confirmaciones temporizadas y correo | Mixto |

@@ -50,8 +50,8 @@ Login → modal con tres cuentas de `constants/data.ts` → seleccionar cualquie
 ## 4. Registro
 
 1. Login → Registrarse.
-2. Se solicitan nombre, apellido, legajo, DNI, email, password, teléfono, domicilio, provincia/site y fecha de nacimiento.
-3. Validaciones locales bloquean campos inválidos.
+2. Se solicitan nombre, apellido, legajo, DNI, email, password y su confirmación, teléfono, domicilio, provincia/site y fecha de nacimiento (DD/MM/AAAA).
+3. Validaciones locales bloquean campos inválidos: confirmación exacta de contraseña, fecha calendario válida y no futura; barras de fecha automáticas. El ojo de cada contraseña es independiente; Siguiente recorre los campos y abre provincia desde domicilio. El hook `useKeyboardFormScroll` intenta mantener visible el campo con teclado nativo; sus pruebas actuales tienen fallas de geometría (ver QA).
 4. Si son válidos, **los datos no se envían ni almacenan**.
 5. Se abre OTP WhatsApp; cualquier código de 6 dígitos avanza.
 6. Pantalla “Te enviamos un correo” → Entendido.

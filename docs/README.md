@@ -1,6 +1,6 @@
 # Documentación integral — GdeS Mobile
 
-> Estado relevado del código en la rama `feature/update_harness`. El código es la fuente de verdad.
+> Documentación vigente contrastada con el código local. El código evidencia comportamiento real; el contrato común conserva los requisitos aprobados pendientes.
 
 ## Propósito
 
@@ -14,7 +14,7 @@ Este directorio concentra el contexto funcional y técnico necesario para trabaj
 | Mock | Ejecutable, pero simula backend, identidad o datos. |
 | Parcial | Existe una parte del flujo, pero faltan validaciones, persistencia o integración. |
 | Inactivo | Existe código, pero ningún flujo activo lo invoca. |
-| Pendiente | Intención explícita en TODO/comentario o siguiente paso recomendado. |
+| Pendiente | Requisito aprobado aún no implementado; recomendaciones se identifican por separado. |
 
 ## Ruta de lectura
 
@@ -32,7 +32,11 @@ Este directorio concentra el contexto funcional y técnico necesario para trabaj
 
 ## Resumen ejecutivo
 
-GdeS Mobile es una aplicación Expo/React Native para empleados que permite autenticarse, registrar entrada/salida/ausencia con geolocalización, cargar planillas y documentación, consultar un perfil y cerrar sesión. La experiencia está construida y navegable, pero no hay backend real: autenticación, lugares, marcaciones, recuperación y cargas son mocks. Solo sesión, favoritos y señales de relevancia se persisten localmente con AsyncStorage. Existe infraestructura de cola/sincronización offline, pero no está conectada al flujo de marcación.
+GdeS Mobile es una aplicación Expo/React Native para empleados que permite autenticarse, registrar entrada/salida/ausencia con geolocalización, cargar planillas y documentación, consultar un perfil y cerrar sesión. La experiencia está construida y navegable, pero no consume API real: autenticación, lugares, marcaciones, recuperación y cargas son mocks. El backend existente solo registra health e infraestructura común, sin endpoints de negocio (`backend_api_gdes/src/app.module.ts`). Solo sesión, favoritos y señales de relevancia se persisten localmente con AsyncStorage. Existe infraestructura de cola/sincronización offline, pero no está conectada al flujo de marcación.
+
+## Organización vigente
+
+Cada decisión se mantiene en su tema con racional breve conforme a [flujo de trabajo](convenciones/flujo-de-trabajo.md). [05](05-servicios-datos-y-contratos.md) concentra la brecha de integración y [10](10-deuda-tecnica-y-roadmap.md) sus pendientes. No guardar historiales ni changelogs; consolidar propuestas antes de retirarlas, con sync verificado; conservar tasks e inbox solo activos.
 
 ## Metodología y límites
 

@@ -25,7 +25,7 @@ npm install
 npx expo start
 ```
 
-Luego elegir plataforma desde el panel de Expo. El `README.md` original documenta el mismo flujo.
+Luego elegir plataforma desde el panel de Expo. El README enlaza esta configuración.
 
 ## Configuración Expo (`app.json`)
 
@@ -33,7 +33,7 @@ Luego elegir plataforma desde el panel de Expo. El `README.md` original document
 - New Architecture habilitada; splash con fondo `#EDF2F5`.
 - iOS `com.gdes.mobile` con soporte tablet; Android `com.gdes.mobile` con adaptive icon.
 - Web con bundler Metro y salida estática.
-- Plugin único: `expo-router`.
+- Plugins: `expo-router` y `expo-status-bar`.
 
 **Permisos:** no se declaran cadenas de uso (`NSLocationWhenInUseUsageDescription`, cámara, etc.). En builds nativos de producción convendrá declararlas; en desarrollo los permisos se piden en runtime.
 
@@ -45,7 +45,7 @@ Luego elegir plataforma desde el panel de Expo. El `README.md` original document
 
 ## Variables de entorno
 
-El proyecto expone `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` en el entorno, **pero el código no la referencia** (no hay integración Supabase presente). No hay `.env` versionado ni otras variables consumidas por la app.
+No hay referencias a `process.env`, `EXPO_PUBLIC_*` ni `NEXT_PUBLIC_*` en el código de aplicación. No existe configuración consumida de URL de API ni integración Supabase; los datos de negocio siguen simulados.
 
 ## Verificación rápida de arranque
 
@@ -57,5 +57,6 @@ El proyecto expone `NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL` en el entorno, **pero
 
 ## Limitaciones de entorno
 
-- Sin backend, los flujos de red “exitosos” son simulados.
+- Sin integración con API de negocio, los flujos “exitosos” son simulados.
+- El lockfile contiene `react-dom@19.3.0` con peer `react@^19.3.0`, mientras React está fijado en `19.2.3`. La instalación limpia no está verificada; ver QA y deuda.
 - GPS/cámara requieren dispositivo real o emulador con soporte; el navegador web limita estas capacidades.

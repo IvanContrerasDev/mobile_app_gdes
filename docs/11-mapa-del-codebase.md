@@ -43,7 +43,8 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 | `components/AppHeader.tsx` | Logo en Home. |
 | `components/BottomTabs.tsx` | Tabs manuales. |
 | `components/GoogleModal.tsx` | Cuentas Google mock. |
-| `components/InputWithError.tsx` | Campo con error (activo). |
+| `components/InputWithError.tsx` | Campo con error, ref nativa y accesorio (activo). |
+| `components/useKeyboardFormScroll.ts` | Mantiene foco visible, calcula margen de teclado y limpia listeners/frames; usado en registro. |
 | `components/OTPInput.tsx` | Entrada OTP. |
 | `components/Icons.tsx` | Íconos SVG (activo). |
 | `components/button.tsx` `input-field.tsx` `login-form.tsx` `login-header.tsx` `google-icon.tsx` | Piezas de formulario; verificar uso real antes de reutilizar. |
@@ -80,6 +81,8 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 | `types/document.ts` | Contratos de documentos + lugares mock + extensiones. |
 | `types/workplace.ts` | Modelo Workplace. |
 | `utils/validations.ts` | Validaciones de formularios. |
+| `utils/registration.ts` | Fecha DD/MM/AAAA, calendario no futuro y confirmación de password. |
+| `utils/registration.test.cjs` | Tests Node con transpilación TS y simulación de hooks/teclado/formulario; estado en QA. |
 | `utils/workplaceSorting.ts` | Ranking de lugares. |
 | `constants/data.ts` | Perfil, cuentas Google, provincias y catálogos legacy. |
 

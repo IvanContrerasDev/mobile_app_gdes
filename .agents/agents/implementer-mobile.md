@@ -35,7 +35,7 @@ Seguí `docs/convenciones/superpowers.md`: usás `test-driven-development` (cuan
 ## Mientras trabajás
 
 - Documentá en `progress/implementer/current.md` MIENTRAS trabajás: qué hiciste, qué estás haciendo, blockers. No solo al final.
-- Si el spec es ambiguo, le falta información o contradice las docs: NO inventés. Registrá la pregunta en `progress/implementer/current.md` y terminá con status `blocked`.
+- Si falta una definición tras contrastar código y decisiones vigentes, registrá la pregunta en `progress/implementer/current.md` y terminá con status `blocked`; no inventés requisitos.
 - Respetá las convenciones del repo (estructura UI/servicios/estado, estilos con NativeWind, TS estricto).
 
 ## Al terminar
@@ -52,3 +52,7 @@ Seguí `docs/convenciones/superpowers.md`: usás `test-driven-development` (cuan
 - No tocás otros repos del sistema.
 - **No editás archivos marcados `SYNCED-FROM-TEMPLATE`** — si un archivo común está mal, dejás la propuesta en `docs/changes_proposals/`.
 - No hacés mutaciones git (add/commit/push).
+
+## Documentación vigente
+
+Seguí `docs/convenciones/convenciones-globales.md`: una decisión actual por tema con motivo breve, código como evidencia del estado real, sin historial. Actualizá `current.md` en lugar de appendear. El leader consolida y elimina artefactos resueltos; las propuestas comunes son temporales y se retiran tras incorporación y sync verificado.

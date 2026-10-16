@@ -50,10 +50,14 @@ Centralizadas en `utils/validations.ts`: email, email-o-legajo, password (polít
 | GPS en logs | HomeScreen | Fuga de ubicación en logs. |
 | Recuperación siempre exitosa | passwordRecoveryService | No hay flujo real. |
 
+## Requisitos aprobados pendientes
+
+El flujo de auth real y sus diferencias respecto del mock están centralizados en [servicios e integración](05-servicios-datos-y-contratos.md). El contrato común exige OTP WhatsApp en ambos logins, magic link en registro y rol `EMPLOYEE`; la UI actual no demuestra ninguna de esas verificaciones.
+
 ## Recomendaciones al integrar backend
 
 - Autenticación por token con expiración y refresh; mover credenciales al servidor.
 - OAuth real de Google y verificación efectiva de OTP.
 - SecureStore/Keychain para tokens; minimizar datos en claro.
-- Reutilizar `validatePassword` también en servidor.
+- Mantener alineada la política de password cliente/servidor; el cliente ya reutiliza `validatePassword` en login y registro.
 - Retirar logs con datos personales/ubicación.

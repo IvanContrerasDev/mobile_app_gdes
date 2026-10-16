@@ -2,7 +2,7 @@
 
 ## Estado de automatización
 
-No existen tests, framework de testing, ESLint ni scripts `test`, `lint` o `typecheck`. TypeScript está en strict, por lo que puede verificarse con `npx tsc --noEmit` aunque no esté declarado como script.
+Existe `utils/registration.test.cjs` con `node:test`, aserciones Node y transpilación TypeScript para fecha, confirmación de password, formulario, `InputWithError` y geometría simulada de teclado Android/iOS. No hay scripts `test`, `lint` ni `typecheck`, ni configuración ESLint; TypeScript está en strict.
 
 ## Smoke test
 
@@ -61,12 +61,15 @@ No existen tests, framework de testing, ESLint ni scripts `test`, `lint` o `type
 
 ```bash
 npm ci
-npx tsc --noEmit
+node node_modules/typescript/bin/tsc --noEmit
+node utils/registration.test.cjs
 ```
 
 ### Resultado del relevamiento
 
-La verificación fue intentada el 2026-08-30. `npm ci` no pudo resolver el árbol: `react-dom@19.2.8` exige `react@^19.2.8`, mientras el proyecto fija `react@19.2.0`. Como la instalación falló, TypeScript no quedó disponible y `tsc --noEmit` no pudo ejecutarse de forma válida. No se alteraron dependencias para forzar la instalación; esta incompatibilidad queda registrada como deuda.
+La comprobación actual con dependencias ya instaladas da `tsc --noEmit` exitoso (exit 0). `node utils/registration.test.cjs` ejecuta **7 tests: 3 pasan y 4 fallan** (exit 1). En geometría Android/iOS se espera `bottomOverlap=296` pero resulta `320` (`registration.test.cjs:103`); el hook usa `keyboardTop * 0.95`. En formulario Android/iOS se espera altura de domicilio `144` pero el componente define `90` (`registration.test.cjs:194`, `RegisterScreen.tsx`). No modificar expectativas ni código sin resolver la intención de UI con el leader.
+
+La instalación limpia no se ejecutó: el lockfile actual contiene `react-dom@19.3.0` que exige `react@^19.3.0`, mientras el proyecto y lock fijan `react@19.2.3`. Es una divergencia estática por resolver; no presentar un fallo antiguo de `npm ci` como prueba de las versiones actuales.
 
 Para evitar afirmar cobertura inexistente, no considerar un build exitoso equivalente a validación funcional. Probar al menos Android/iOS para permisos; web solo sirve para navegación y formularios básicos.
 

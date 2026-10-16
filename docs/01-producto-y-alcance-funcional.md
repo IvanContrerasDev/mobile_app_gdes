@@ -53,4 +53,4 @@ Aplicación móvil para que una persona empleada gestione registros de jornada y
 
 ## Fuera del alcance actual
 
-Backend, base de datos, emisión/verificación de tokens, Google OAuth, WhatsApp, correo, upload multipart, asociación documental a usuario/lugar, edición de perfil, historial de marcaciones/documentos, sincronización activa y control de duplicados no están implementados.
+Integración de la app con backend/base de datos, emisión/verificación de tokens, Google OAuth, WhatsApp, correo, upload multipart, asociación documental a usuario/lugar, edición de perfil, historial de marcaciones/documentos, sincronización activa y control de duplicados no están implementados.

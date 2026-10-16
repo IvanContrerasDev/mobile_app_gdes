@@ -15,9 +15,9 @@ Prioridad por impacto en correctitud, seguridad y mantenibilidad. Cada ítem cit
 6. **Perfil desconectado de la sesión.** `PerfilScreen` usa `userProfile` fijo (Gina Tini) en vez de `authStore.user`. Mostrar el usuario autenticado real.
 7. **Login por legajo no funcional.** UI acepta legajo, servicio solo compara email. Alinear validación y autenticación.
 8. **Marcación offline inactiva.** `offlineRegisterService`/`syncService` existen, pero Home rechaza sin Internet y el import está comentado (`HomeScreen.tsx`). Conectar cola + `subscribeToConnectivity` o retirar el código muerto.
-9. **Motivo de ausencia no persiste.** Se captura en estado local pero no se agrega a `RegisterRequest`. Incluirlo en el contrato y payload.
+9. **Motivo de ausencia no persiste.** Se captura en estado local pero no se agrega a `RegisterRequest`. Migrar al `absenceReason` ya aprobado; confirmar equivalencia de “franco” con catálogo, sin inventarla (doc 05).
 10. **Catálogos de lugares duplicados/incoherentes.** IDs distintos entre `workplaceService` (wp-1..3), `types/document` (wp-001..003) y `constants/data`. Unificar fuente única.
-11. **Instalación reproducible bloqueada.** `npm ci` falla: `react-dom@19.2.8` requiere `react@^19.2.8`, pero `package.json` fija `react@19.2.0`. Alinear versiones compatibles de React/React DOM/Expo y regenerar lockfile.
+11. **Instalación limpia sin verificar y peers inconsistentes.** Lockfile: `react-dom@19.3.0` requiere `react@^19.3.0`, pero React está fijado en `19.2.3`. Alinear dependencias compatibles y validar instalación limpia. `tsc` con node_modules existente pasa; esto no valida el lock (doc 09).
 
 ## Medio
 
@@ -32,7 +32,7 @@ Prioridad por impacto en correctitud, seguridad y mantenibilidad. Cada ítem cit
 ## Bajo
 
 19. **Permisos sin cadenas de uso en `app.json`.** Necesario para builds nativos de producción.
-20. **Sin lint/test/typecheck en scripts.** Añadir tooling y CI.
+20. **Sin lint/test/typecheck en scripts; suite existente con fallas.** Hay tests Node en `utils/registration.test.cjs`: 4 de 7 fallan por geometría/altura de formulario, mientras `tsc` pasa (doc 09). Resolver intención de UI y pruebas antes de CI; no asumir ausencia de tests.
 21. **`registerEventWithError` de prueba en producción del bundle.** Evaluar aislar utilidades de test.
 22. **Franja horaria rígida.** Solo mañana/tarde con corte fijo (`recentWorkplaceService`).
 23. **Mezcla de idiomas.** Comentarios/logs en inglés y UI en español; definir criterio.
@@ -46,9 +46,13 @@ Prioridad por impacto en correctitud, seguridad y mantenibilidad. Cada ítem cit
 - `passwordRecoveryService.ts`: endpoint real de recuperación.
 - `workplaceService.ts`, `usedWorkplaceService.ts`, `workplaceSorting.ts`, `recentWorkplaceService.ts`: reemplazar datos/ranking local por backend.
 - `favoriteWorkplaceService.ts`: sincronizar favoritos con backend.
-- `validations.ts`: reutilizar `validatePassword` en registro, cambio, recuperación y backend.
+- `validations.ts`: el TODO de reutilizar password ya está cumplido en registro; cambio/recuperación reales y política servidor siguen pendientes.
 
-## Roadmap sugerido (visión objetivo)
+## Integración aprobada pendiente (F-010)
+
+F-010 sigue `pending`, sin task spec, en `feature_list.json`. El detalle consolidado está en [doc 05](05-servicios-datos-y-contratos.md): identidad inglesa/rol, OTP real, tokens/refresh, envelopes, eventos idempotentes y motivo de ausencia, estado laboral servidor, catálogo único y multipart de documentos/planillas. Offline debe contemplar límite inclusivo de 24 h con recepción servidor y errores terminales. Falta implementar el error offline documentado en backend, definir timestamps futuros, equivalencia de “franco” y origen de carga de `cuil`/`hireDate`/`position`. El leader debe incorporar estos criterios al task futuro; esta limpieza no cambia backlog ni estados.
+
+## Roadmap sugerido (recomendación, no requisito nuevo)
 
 ```mermaid
 flowchart LR
