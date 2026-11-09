@@ -16,6 +16,145 @@
         "DocumentUploadRequest.workplace → workplaceId; respuestas con envoltorio { data }",
         "isWorking derivado de GET /attendance/status; sync offline activada"
       ]
+    },
+    {
+      "id": "F-011",
+      "titulo": "M-01 — Runtime, transporte y verificación reproducible",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/011-runtime-api.md",
+      "dependencias": [],
+      "criterios": [
+        "Resolver peers/lockfile con versiones Expo/React/RN compatibles verificadas en fuentes oficiales; npm ci sin force/legacy-peer-deps. Registrar cualquier bloqueo de red/registry con comando y error concreto.",
+        "Diagnosticar las cuatro fallas de registration.test.cjs contrastando geometría e intención vigente; no alterar expectativas solo para verde. El margen de teclado no debe compensarse dos veces tras resize; documentar por qué cada expectativa o implementación cambia. Mantener apariencia de domicilio actual si no existe acuerdo de cambio; las pruebas deben verificar visibilidad completa y navegación, no imponer una altura arbitraria.",
+        "Cliente HTTP único en services/httpClient.ts con base EXPO_PUBLIC_API_BASE_URL validada, /api/v1 preservado, JSON/envelope data, error {code,message,retryable}, timeout y cancelación distinguibles; sin fallback mock. Soportar inyección de fetch para tests y evolución de auth M-02.",
+        "Scripts test/typecheck; suites de transporte incluyen URL/prefijo, body y headers, 204/202, error contractual, respuesta inválida, red, timeout y cancelación; TypeScript y suite existente ejecutados.",
+        "Preparar development build local Android, esquema gdes, permisos GPS/cámara/picker, HTTP LAN limitado a desarrollo y .env.example sin secretos. Registrar prerrequisitos/compandos exactos para build e instalación.",
+        "Comprobar API/health y catálogo desde Android físico en LAN y error al caer la red; sin teléfono/toolchain disponible registrar bloqueo concreto. Expo Go o curl de PC no satisfacen el criterio."
+      ],
+      "review_status": "approved_local_integral_blocked",
+      "bloqueos": [
+        "Android SDK/JDK/adb ausentes: no APK ni instalación física",
+        "Android físico y API LAN sin prueba real; criterios5/6 pendientes"
+      ]
+    },
+    {
+      "id": "F-012",
+      "titulo": "M-02 — Identidad, OTP y sesión segura",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/012-sesion-real.md",
+      "dependencias": [
+        "F-011"
+      ],
+      "criterios": [
+        "Migrar usuario a id,firstName,lastName,email,employeeId,role; invalidar sesión mock AsyncStorage y nunca autenticar por booleano persistido; solo EMPLOYEE.",
+        "Login identifier/password clientType MOBILE → challenge 202; verify OTP real → tokens/usuario. Reenvío, estado/email/role y errores según DTO exacto publicado; no aceptar cualquier OTP.",
+        "SecureStore para tokens; bootstrap valida sesión; refresh JSON rotativo single-flight ante dos 401; respuesta ambigua invalida sesión sin reutilizar refresh consumido.",
+        "Logout revoca con API cuando corresponde y limpia credenciales/estado; generation/abort impide resurrección por respuestas tardías. Aislar preferencias/cache por cuenta y conservar cola ligada a propietario para M-05.",
+        "Pruebas de login OTP inválido/éxito, no-EMPLOYEE, reinicio/rehidratación, mock inválido, refresh concurrente/expirado/ambiguo, logout tardío y cambio de cuenta. Registrar smoke real B-03 separado si bloqueado."
+      ],
+      "review_status": "approved_local_integral_blocked",
+      "bloqueos": [
+        "Sin .env ni EXPO_PUBLIC_API_BASE_URL para API LAN real",
+        "Fixture B-03 y OTP log backend no suministrados",
+        "Sin Android SDK/adb ni teléfono/development build para SecureStore y sesión real"
+      ]
+    },
+    {
+      "id": "F-013",
+      "titulo": "M-03 — Alta, email, recuperación y Google",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/013-alta-enlaces-google.md",
+      "dependencias": [
+        "F-012"
+      ],
+      "criterios": [
+        "Registro envía diez campos ingleses y siteId catálogo público exactos; OTP REGISTER retorna 202 sin tokens; pendiente email y reenvío reales; password nueva 12–128 Unicode según backend.",
+        "Rutas frío/caliente gdes://email-verified?success=true muestran retorno sin autenticar por query ni destruir sesión ajena; estados inválido/usado/vencido claros.",
+        "Recuperación neutra real; reset servido en Admin /password-reset accesible desde Android. Prueba de nueva password y revocación anterior con evidencia cuando B-02/A-03 disponibles.",
+        "Retirar identidad y selector Google falsos; OAuth Authorization Code + PKCE/idToken y OTP backend conforme credenciales/audience/redirect. Sin credenciales mostrar no configurado; no simular éxito; validación externa separada.",
+        "Tests de payload/catalog/OTP sin tokens/deep links/query no confiable/recuperación/OAuth cancelado y configuración ausente; correo local y Google real se registran con evidencia o bloqueo concreto."
+      ]
+    },
+    {
+      "id": "F-014",
+      "titulo": "M-04 — Lugares, perfil y asistencia online",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/014-asistencia-online.md",
+      "dependencias": [
+        "F-012"
+      ],
+      "criterios": [
+        "Una fuente GET /workplaces activa no paginada EMPLOYEE; DTO real siteId/siteName/clientName/coordenadas/radio, sin IDs fijos. Favoritos/usados/recientes locales por cuenta sin selección inactiva.",
+        "GET /profile real y GET /attendance/status autoridad; refrescar al foreground/éxito/reinicio sin derivar estado de memoria local.",
+        "POST /attendance/events con workplaceId,type,clientRequestId,latitude,longitude,accuracy,locationTimestamp y absenceReason opcional de catálogo; nunca userId. Online occurredAt servidor. Respuesta eventId/recordId/message.",
+        "ID durable estable antes del primer envío, también timeout/reinicio; impedir doble envío, conservar datos ante fallo. GPS/permiso/geocerca/precisión/timeout no muestran éxito falso. Quitar logs de coordenadas y payloads.",
+        "Franco conserva jornada libre sin obligación; no mapear a VACATION/LEAVE ni inferir incumplimiento. Consumir catálogo; representación aún ausente se registra como bloqueo parcial.",
+        "Tests de payload/IDs reintento/reinicio, status/foreground, perfil, preferencias por cuenta/lugar inactivo/errores GPS. Smoke real lugar Admin y teléfono: entrada/salida/ausencia y matriz Admin como dependencia externa explícita."
+      ]
+    },
+    {
+      "id": "F-015",
+      "titulo": "M-05 — Cola offline durable y reconciliación",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/015-offline-durable.md",
+      "dependencias": [
+        "F-014"
+      ],
+      "criterios": [
+        "Cola versionada durable con propietario/clientRequestId/occurredAt/GPS originales; formato anterior aislado; lectura corrupta/escritura fallida nunca equivale a cola vacía ni éxito guardado. Mutex para todas modificaciones y sync.",
+        "UI PENDIENTE tras persistir distinto de CONFIRMADO servidor; no alterar status como si hubiera ACK. Foreground/reconexión sincroniza secuencial por recepción, sin doble proceso.",
+        "clientSentAt fresco cada intento; resto del contenido/ID original estable. Quitar solo confirmados eventId/recordId o replay; 429/5xx/red reintento acotado, terminales visibles sin borrado silencioso.",
+        "Logout/cambio cuenta conserva evidencia del propietario y jamás la envía bajo otra cuenta; pendientes visibles al volver propietario; sin borrado manual hasta ratificar retención/descarte.",
+        "Pruebas ACK perdido/restart/post-ACK-pre-delete, sync parcial, inserción concurrente, reconexiones dobles, propietario distinto/corrupción/error persistencia, 24 h inclusivas/>24 h y skew con semántica servidor. No decidir política temporal abierta."
+      ]
+    },
+    {
+      "id": "F-016",
+      "titulo": "M-06 — Multipart de planillas y documentos",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "pending",
+      "taskSpec": "docs/tasks/016-binarios-reales.md",
+      "dependencias": [
+        "F-014"
+      ],
+      "criterios": [
+        "FormData nativo usa URI/nombre/MIME reales; planilla ordinaria workplaceId y período month/year escalar por request, múltiples períodos requests/resultados separados sin atomicidad ficticia.",
+        "Documentos usan tipo contractual y workplaceId opcional; preservar contingencia con null confirmada, sin lugar ficticio. Integrar transporte B-04 una vez publicado; si no está, registrar bloqueo parcial sin eliminar flujo.",
+        "Envelopes EMPLOYEE timesheetIds/documentIds/message exactos, sin confundir created de Admin. Una fuente lugares activos reutilizada M-04.",
+        "1–10 archivos, hasta 20 MiB inclusivos por archivo y extensiones contractuales; permisos/cancelación/URI inaccesible/red/error mantienen selección y nunca éxito falso. No retry automático de carga incierta ni cola implícita.",
+        "Tests payloads nativos/período/nulos/envelopes/límites/selección-error/sesión expirada y respuesta perdida. Android imagen/PDF → Admin mismos bytes y rechazo atómico/storage caído con evidencia real o bloqueo identificado."
+      ]
+    },
+    {
+      "id": "F-017",
+      "titulo": "Compatibilidad Expo SDK 58",
+      "apps": [
+        "mobile"
+      ],
+      "estado": "in_progress",
+      "taskSpec": "docs/tasks/017-expo-sdk-58.md",
+      "criterios": [
+        "SDK58 y dependencias oficiales alineadas sin force/legacy-peer-deps",
+        "Instalación reproducible, tests, tipos, config y export Android verificados",
+        "Docs vigentes y límites de verificación física explícitos"
+      ]
     }
   ]
 }

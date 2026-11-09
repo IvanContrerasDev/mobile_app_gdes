@@ -24,4 +24,20 @@ export interface RegisterResponse {
 export interface ApiError {
   code: string;
   message: string;
+  retryable: boolean;
+}
+
+
+export interface ApiPagination {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface HttpResponse<T> {
+  status: number;
+  /** undefined en HTTP 204; cada servicio valida su DTO de dominio. */
+  data: T | undefined;
+  pagination?: ApiPagination;
 }

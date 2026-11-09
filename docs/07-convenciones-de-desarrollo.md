@@ -10,7 +10,7 @@ navigation/   Navegadores por estado (Auth/App)
 screens/      Pantallas de negocio
 components/   UI reutilizable
 store/        useAppStore (marcación, en memoria)
-stores/       authStore (sesión persistida)
+stores/       authStore (estado de sesión en memoria)
 services/     Acceso a datos/dispositivo (hoy mocks + locales)
 types/        Contratos TypeScript
 utils/        Validaciones y ordenamiento
@@ -43,7 +43,7 @@ Nota: coexisten `store/` y `stores/`. Mantener el destino correcto: sesión en `
 
 ## Estado global
 
-- `authStore` solo maneja sesión y expone `hydrated`; respetar `partialize`.
+- `authStore` solo refleja sesión y expone `hydrated`; authService/coordinador valida identidad y tokenRepository persiste únicamente en SecureStore.
 - `useAppStore` maneja la marcación en memoria; llamar `resetRegistration` tras completar.
 - No introducir un tercer store sin unificar el modelo de usuario.
 
@@ -51,7 +51,7 @@ Nota: coexisten `store/` y `stores/`. Mantener el destino correcto: sesión en `
 
 - Firma `async` que retorna una `Promise` tipada del contrato en `types/`.
 - Simular latencia mientras sea mock; al integrar API migrar tipos y consumidores al contrato común (doc 05); las firmas mock no son contrato externo.
-- Servicios locales encapsulan AsyncStorage y degradan a valores neutros ante error.
+- Servicios locales encapsulan persistencia y propagan fallos de escritura; nunca tratar un guardado fallido como éxito. Las preferencias se ligan al scope de cuenta.
 
 ## Extensión recomendada
 

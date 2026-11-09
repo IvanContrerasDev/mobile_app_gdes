@@ -13,7 +13,7 @@ import { BottomTabs } from "../components/BottomTabs";
 
 // Store
 import { useAppStore } from "../store/useAppStore";
-import { useAuthStore } from "../stores/authStore";
+import { logout } from "../services/authService";
 
 type AppStep = "home" | "homeSuccess" | "documentos" | "perfil";
 
@@ -27,7 +27,7 @@ export function AppNavigator() {
   const [step, setStep] = useState<AppStep>("home");
 
   const { selectedAction, resetRegistration } = useAppStore();
-  const logout = useAuthStore((state) => state.logout);
+
 
   const handleTabChange = (tab: "home" | "documentos" | "perfil") => {
     setStep(tab);
@@ -57,7 +57,7 @@ export function AppNavigator() {
         <PerfilScreen
           onLogout={() => {
             // Clear session; root navigator swaps to AuthNavigator.
-            logout();
+            void logout().catch(() => { /* El error queda visible en authStore. */ });
           }}
         />
       )}

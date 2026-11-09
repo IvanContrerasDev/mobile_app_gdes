@@ -22,7 +22,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#EDF2F5"
       },
-      "package": "com.gdes.mobile"
+      "package": "com.gdes.mobile",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -31,7 +36,39 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GdeS necesita tu ubicación para registrar la entrada y salida."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GdeS necesita acceso a las imágenes que seleccionás para adjuntar documentación.",
+          "cameraPermission": "GdeS necesita la cámara para fotografiar planillas y documentación.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-dev-client",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ],
+      "./plugins/withAndroidDevelopmentHttp"
     ]
   }
 }

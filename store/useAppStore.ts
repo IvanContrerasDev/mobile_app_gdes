@@ -33,6 +33,8 @@ export interface AppActions {
   setAction: (action: ActionType | null) => void;
   setObservation: (observation: string) => void;
   
+  resetAccount: () => void;
+
   // Reset registration
   resetRegistration: () => void;
 }
@@ -50,6 +52,8 @@ const initialState: AppState = {
 export const useAppStore = create<AppStore>((set) => ({
   // Initial state
   ...initialState,
+
+  resetAccount: () => set({ ...initialState }),
 
   // User actions
   setUser: (user) => set({ user }),

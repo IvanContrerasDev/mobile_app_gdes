@@ -10,9 +10,10 @@ flowchart TD
  root -->|auth| app[AppNavigator]
 
  subgraph auth
-  login --> register --> vcr[verifyCodeRegister] --> emailSent --> rs[registerSuccess] --> login
+  login --> register --> vcr[verifyRegister] --> emailSent --> rs[registerSuccess] --> login
   login --> forgotPassword --> login
-  login -->|Google| gs[googleSuccess] --> vcg[verifyCodeGoogle] -->|login store| app
+  login -->|challenge real| vl[verifyLogin] -->|OTP y tokens| app
+  login -->|Google| gc[No configurado]
  end
 
  subgraph app
@@ -25,19 +26,19 @@ flowchart TD
 
 ## AuthNavigator (`navigation/AuthNavigator.tsx`)
 
-Pasos: `login`, `register`, `verifyCodeRegister`, `emailSent`, `registerSuccess`, `googleSuccess`, `verifyCodeGoogle`, `forgotPassword`. `GoogleModal` se controla con estado propio. El login email/contraseña se resuelve dentro de `LoginScreen` (callback `onLogin` vacío) y el login Google inyecta un usuario fijo vía `completeGoogleAuth`.
+Pasos activos: `login`, `verifyLogin`, `register`, `verifyRegister`, `emailSent`, `registerSuccess`, `forgotPassword`. Login entrega challenge a `verifyLogin`; solo OTP backend instala sesión mediante coordinador. Google muestra no configurado. Registro/reset siguen mock sin poder instalar identidad. Cambiar de paso cancela operaciones de login/OTP pendientes.
 
 ## AppNavigator (`navigation/AppNavigator.tsx`)
 
-Pasos: `home`, `homeSuccess`, `documentos`, `perfil`. `AppHeader` se muestra solo en home. `BottomTabs` se oculta en `homeSuccess`. `homeSuccess` usa `selectedAction` del store y resetea la marcación al continuar. Logout llama a `authStore.logout()`.
+Pasos: `home`, `homeSuccess`, `documentos`, `perfil`. `AppHeader` se muestra solo en home. `BottomTabs` se oculta en `homeSuccess`. `homeSuccess` usa `selectedAction` del store y resetea la marcación al continuar. Logout llama al coordinador vía `authService.logout()`, limpia identidad y muestra fallos/reintento de revocación en AuthNavigator.
 
 ## Catálogo de pantallas
 
 | Pantalla | Archivo | Rol | Estado |
 |---|---|---|---|
-| Login | `screens/LoginScreen.tsx` | Identificador + password, Google, links | Mock auth |
+| Login | `screens/LoginScreen.tsx` | Identificador + password, Google, links | Login/OTP real portátil, aceptación API/Android pendiente |
 | Registro | `screens/RegisterScreen.tsx` | Alta con confirmación de contraseña, fecha DD/MM/AAAA y selector de provincia (estado `site`) | Parcial |
-| Verificación OTP | `screens/VerifyCodeScreen.tsx` | Código WhatsApp | Mock |
+| Verificación OTP | `screens/VerifyCodeScreen.tsx` | Código WhatsApp | LOGIN real; REGISTER mock |
 | Recuperación | `screens/ForgotPasswordScreen.tsx` | Solicitud por email | Mock |
 | Éxitos | `screens/SuccessScreens.tsx` | Confirmaciones temporizadas y correo | Mixto |
 | Home | `screens/HomeScreen.tsx` | Marcación con GPS/red | Mock backend |
@@ -50,7 +51,7 @@ Pasos: `home`, `homeSuccess`, `documentos`, `perfil`. `AppHeader` se muestra sol
 |---|---|---|
 | AppHeader | `components/AppHeader.tsx` | Logo en home. |
 | BottomTabs | `components/BottomTabs.tsx` | Tabs manuales; solo iconos. |
-| GoogleModal | `components/GoogleModal.tsx` | Cuentas Google mock. |
+| GoogleModal | `components/GoogleModal.tsx` | Legacy inactivo; no conectado al acceso Google. |
 | InputWithError | `components/InputWithError.tsx` | Campo con etiqueta y error. |
 | OTPInput | `components/OTPInput.tsx` | Entrada de código. |
 | Icons | `components/Icons.tsx` | Íconos SVG del sistema. |

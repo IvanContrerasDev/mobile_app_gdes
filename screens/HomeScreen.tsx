@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, ActivityIndicator } from "react-native";
 import { ChevronDownIcon, CheckIcon, AttachIcon, StarIcon } from "../components/Icons";
 import { useAppStore, ActionType } from "../store/useAppStore";
@@ -6,6 +6,7 @@ import { registerEvent } from "../services/registerService";
 import { getCurrentLocation } from "../services/locationService";
 import { isOnline } from "../services/networkService";
 import { getWorkplaces } from "../services/workplaceService";
+import { getAccountScope } from "../services/accountScope";
 import { getFavorites, addFavorite, removeFavorite } from "../services/favoriteWorkplaceService";
 import { saveRecentWorkplace, getRecentWorkplaceForCurrentPeriod } from "../services/recentWorkplaceService";
 import { saveUsedWorkplace, getUsedWorkplaces } from "../services/usedWorkplaceService";
@@ -21,6 +22,19 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onRegister }: HomeScreenProps) {
+  // La key del navegador no cancela continuaciones async. Cada operación conserva
+  // tanto la vida de esta pantalla como el objeto de generación de su cuenta.
+  const lifetime = useRef({ active: true, scope: getAccountScope() });
+  useEffect(() => {
+    const mounted = { active: true, scope: getAccountScope() };
+    lifetime.current = mounted;
+    return () => { mounted.active = false; };
+  }, []);
+  const captureOperation = () => {
+    const mounted = lifetime.current;
+    return () => mounted.active && mounted.scope.ownerId !== null && mounted.scope === getAccountScope();
+  };
+
   // Zustand store
   const {
     selectedAction,
@@ -61,6 +75,8 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
   // Fetch workplaces on mount
   const loadWorkplaces = async () => {
+    const isCurrent = captureOperation();
+    if (!isCurrent()) return;
     setIsLoadingWorkplaces(true);
     setWorkplacesError("");
     try {
@@ -72,6 +88,7 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         getUsedWorkplaces(),
       ]);
 
+      if (!isCurrent()) return;
       setWorkplaces(data);
       setFavorites(favoriteIds);
       setRecentWorkplaceId(recentId);
@@ -89,9 +106,10 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
         }
       }
     } catch (error) {
+      if (!isCurrent()) return;
       setWorkplacesError("No fue posible obtener los lugares de trabajo.\n\nPor favor, intente nuevamente.");
     } finally {
-      setIsLoadingWorkplaces(false);
+      if (isCurrent()) setIsLoadingWorkplaces(false);
     }
   };
 
@@ -101,16 +119,20 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
 
   // Toggle favorite state with immediate visual feedback + persistence
   const handleToggleFavorite = async (workplaceId: string) => {
+    const isCurrent = captureOperation();
+    if (!isCurrent()) return;
     const isFav = favorites.includes(workplaceId);
-    // Optimistic UI update
     setFavorites((prev) =>
       isFav ? prev.filter((id) => id !== workplaceId) : [...prev, workplaceId]
     );
-    // Persist
-    if (isFav) {
-      await removeFavorite(workplaceId);
-    } else {
-      await addFavorite(workplaceId);
+    try {
+      if (isFav) await removeFavorite(workplaceId);
+      else await addFavorite(workplaceId);
+      if (!isCurrent()) return;
+    } catch (error) {
+      if (!isCurrent()) return;
+      setFavorites(favorites);
+      setGeneralError("No se pudo guardar el favorito. Reintentá.");
     }
   };
 
@@ -154,99 +176,68 @@ export function HomeScreen({ onRegister }: HomeScreenProps) {
   };
 
   const handleSubmit = async () => {
-    // Clear previous errors
+    const isCurrent = captureOperation();
+    if (!isCurrent()) return;
     setGeneralError("");
-    
-    // Run validations
-    if (!validateForm()) {
-      return;
-    }
-    
-    // Set loading state
+    if (!validateForm()) return;
     setIsLoading(true);
     setLoadingMessage("Obteniendo ubicación...");
-    
-    let location;
+
     try {
-      // Get current location first (required for registration)
-      location = await getCurrentLocation();
-    } catch (error) {
-      // Handle location errors - cannot proceed without GPS
-      setIsLoading(false);
-      setLoadingMessage("");
-      
-      // Show detailed location error message
-      setGeneralError("No fue posible obtener su ubicación actual.\n\nVerifique que el GPS esté habilitado e intente nuevamente.\n\nSi el problema persiste o no puede resolverlo, utilice la planilla física para registrar su jornada laboral.");
-      return;
-    }
-    
-    // Check connectivity before attempting registration
-    setLoadingMessage("Verificando conexión...");
-    const online = await isOnline();
-    
-    if (!online) {
-      // No internet connection - reject registration
-      setIsLoading(false);
-      setLoadingMessage("");
-      
-      // TODO: Implementar almacenamiento offline y sincronización automática en una futura versión.
-      setGeneralError("No posee conexión a Internet.\n\nPor favor, conéctese a una red e intente nuevamente.\n\nSi no puede realizar el registro digital, utilice la planilla física correspondiente a su lugar de trabajo.");
-      return;
-    }
-    
-    // Build request using service types (includes location data)
-    const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
-    const request: RegisterRequest = {
-      workplaceId: workplace?.id || "",
-      action: selectedAction!,
-      observation: observation || undefined,
-      timestamp: new Date().toISOString(),
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy,
-      locationTimestamp: location.timestamp,
-    };
-    
-    console.log("[v0] RegisterRequest:", request);
-    
-    // Online mode - send to API
-    setLoadingMessage("Registrando...");
-    
-    try {
+      let location;
+      try {
+        location = await getCurrentLocation();
+      } catch (error) {
+        if (!isCurrent()) return;
+        setGeneralError("No fue posible obtener su ubicación actual.\n\nVerifique que el GPS esté habilitado e intente nuevamente.\n\nSi el problema persiste o no puede resolverlo, utilice la planilla física para registrar su jornada laboral.");
+        return;
+      }
+      if (!isCurrent()) return;
+      setLoadingMessage("Verificando conexión...");
+      const online = await isOnline();
+      if (!isCurrent()) return;
+      if (!online) {
+        // Offline sigue inactivo: esta corrección no modifica el dominio M-04/M-05.
+        setGeneralError("No posee conexión a Internet.\n\nPor favor, conéctese a una red e intente nuevamente.\n\nSi no puede realizar el registro digital, utilice la planilla física correspondiente a su lugar de trabajo.");
+        return;
+      }
+      const workplace = workplaces.find(wp => wp.name === selectedWorkplace);
+      const request: RegisterRequest = {
+        workplaceId: workplace?.id || "",
+        action: selectedAction!,
+        observation: observation || undefined,
+        timestamp: new Date().toISOString(),
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+        locationTimestamp: location.timestamp,
+      };
+      setLoadingMessage("Registrando...");
       const response = await registerEvent(request);
-      
+      if (!isCurrent()) return;
       if (response.success) {
-        // Remember this workplace for the current time period
         if (workplace?.id) {
           await saveRecentWorkplace(workplace.id);
-          // Track in used-workplaces history for relevance ranking
+          if (!isCurrent()) return;
           await saveUsedWorkplace(workplace.id);
+          if (!isCurrent()) return;
         }
-
-        // Update working status based on action
-        if (selectedAction === "entrada") {
-          setWorkingStatus(true);
-        } else if (selectedAction === "salida") {
-          setWorkingStatus(false);
-        }
-        
-        // Clear observation after successful registration
+        if (selectedAction === "entrada") setWorkingStatus(true);
+        else if (selectedAction === "salida") setWorkingStatus(false);
         setObservation("");
         setMotivoAusencia("");
-        
-        // Call onRegister to show success screen
         onRegister();
       } else {
-        // Handle API error response
         setGeneralError(response.message + "\n\nSi el problema persiste, utilice la planilla física correspondiente a su lugar de trabajo.");
       }
-      
     } catch (error) {
-      // Fallback error handling with clear instructions
+      if (!isCurrent()) return;
       setGeneralError("No fue posible completar el registro debido a un error de comunicación con el servidor.\n\nPor favor, verifique su conexión e intente nuevamente.\n\nSi el problema persiste, utilice la planilla física.");
     } finally {
-      setIsLoading(false);
-      setLoadingMessage("");
+      if (isCurrent()) {
+        setIsLoading(false);
+        setLoadingMessage("");
+      }
     }
   };
 

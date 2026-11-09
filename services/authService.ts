@@ -1,44 +1,25 @@
-import { AuthUser } from "../stores/authStore";
-
-// TODO: Reemplazar autenticación mock por API real.
-
-export interface LoginResult {
-  success: boolean;
-  user?: AuthUser;
-  message?: string;
-}
-
-// Mock credentials (MVP only)
-const MOCK_EMAIL = "empleado@gdes.com";
-const MOCK_PASSWORD = "Gdes@2025";
-
-const MOCK_USER: AuthUser = {
-  id: "usr-001",
-  nombre: "Juan",
-  apellido: "Pérez",
-  email: MOCK_EMAIL,
-  legajo: "12345",
-};
-
-/**
- * Simulated login.
- * TODO: Reemplazar autenticación mock por API real.
- */
-export async function login(email: string, password: string): Promise<LoginResult> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const normalizedEmail = email.trim().toLowerCase();
-
-  if (normalizedEmail === MOCK_EMAIL && password === MOCK_PASSWORD) {
-    return {
-      success: true,
-      user: MOCK_USER,
-    };
-  }
-
-  return {
-    success: false,
-    message: "Usuario o contraseña incorrectos.",
-  };
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createSessionCoordinator } from './sessionCoordinator';
+import { tokenRepository } from './tokenRepository';
+import { httpClient } from './httpClient';
+import { useAuthStore } from '../stores/authStore';
+import { useAppStore } from '../store/useAppStore';
+import { setAccountOwner } from './accountScope';
+export type { LoginChallenge } from './sessionCoordinator';
+export const sessionCoordinator = createSessionCoordinator({
+  http: httpClient,
+  repository: tokenRepository,
+  clearLegacy: () => AsyncStorage.removeItem('gdes-auth-session'),
+  onChange: (state) => useAuthStore.setState(state),
+  onAccountChange: (ownerId) => {
+    setAccountOwner(ownerId);
+    useAppStore.getState().resetAccount();
+  },
+});
+export const login = sessionCoordinator.login;
+export const verifyOTP = sessionCoordinator.verify;
+export const resendOTP = sessionCoordinator.resend;
+export const logout = sessionCoordinator.logout;
+export const bootstrapSession = sessionCoordinator.bootstrap;
+/** Transporte autenticado único para consumidores M-04/M-06; conserva HTTP común. */
+export const authenticatedRequest = sessionCoordinator.request;

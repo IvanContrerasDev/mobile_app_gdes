@@ -3,6 +3,7 @@
 
 import { getPendingRegisters, removeOfflineRegister } from "./offlineRegisterService";
 import { registerEvent } from "./registerService";
+import { getAccountScope } from "./accountScope";
 
 /**
  * Synchronize all pending offline registers
@@ -12,6 +13,8 @@ import { registerEvent } from "./registerService";
 export async function syncPendingRegisters(): Promise<void> {
   console.log("[v0] Sincronizando pendientes...");
   
+  const scope = getAccountScope();
+  if (!scope.ownerId) return;
   const pendingRegisters = await getPendingRegisters();
   
   if (pendingRegisters.length === 0) {
@@ -22,10 +25,12 @@ export async function syncPendingRegisters(): Promise<void> {
   console.log(`[v0] Encontrados ${pendingRegisters.length} registros pendientes`);
   
   for (const offlineRegister of pendingRegisters) {
+    if (scope !== getAccountScope() || offlineRegister.ownerId !== scope.ownerId) return;
     try {
       // Attempt to sync this register
       const response = await registerEvent(offlineRegister.request);
       
+      if (scope !== getAccountScope()) return;
       if (response.success) {
         // Successfully synced - remove from queue
         await removeOfflineRegister(offlineRegister.id);

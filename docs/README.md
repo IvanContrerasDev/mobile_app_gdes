@@ -32,7 +32,7 @@ Este directorio concentra el contexto funcional y técnico necesario para trabaj
 
 ## Resumen ejecutivo
 
-GdeS Mobile es una aplicación Expo/React Native para empleados que permite autenticarse, registrar entrada/salida/ausencia con geolocalización, cargar planillas y documentación, consultar un perfil y cerrar sesión. La experiencia está construida y navegable, pero no consume API real: autenticación, lugares, marcaciones, recuperación y cargas son mocks. El backend existente solo registra health e infraestructura común, sin endpoints de negocio (`backend_api_gdes/src/app.module.ts`). Solo sesión, favoritos y señales de relevancia se persisten localmente con AsyncStorage. Existe infraestructura de cola/sincronización offline, pero no está conectada al flujo de marcación.
+GdeS Mobile es una aplicación Expo/React Native para empleados que permite autenticarse, registrar entrada/salida/ausencia con geolocalización, cargar planillas y documentación, consultar un perfil y cerrar sesión. La experiencia está construida y navegable, con integración portátil de sesión: login/OTP/sesión ya consumen API con SecureStore y validación servidor; lugares, marcaciones, recuperación y cargas siguen mock. El backend registra módulos reales de auth, estructura, usuarios/perfil, asistencia, dashboard y archivos (`backend_api_gdes/src/app.module.ts`); su disponibilidad local por LAN y el consumo desde Android aún deben verificarse. Sesión se persiste en SecureStore; AsyncStorage guarda preferencias por cuenta y una marca no sensible de invalidación. La aceptación API/Android de sesión sigue pendiente. Existe infraestructura de cola/sincronización offline, pero no está conectada al flujo de marcación.
 
 ## Organización vigente
 

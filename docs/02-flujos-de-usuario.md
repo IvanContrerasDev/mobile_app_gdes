@@ -2,56 +2,41 @@
 
 ## 1. Arranque y sesión
 
-```mermaid
-flowchart TD
- A[Abre app] --> B[Rehidratar gdes-auth-session]
- B -->|pendiente| C[Spinner]
- B -->|isAuthenticated false| D[AuthNavigator: login]
- B -->|true| E[AppNavigator: home]
-```
+`app/index.tsx` valida URL API antes de navegar. Configuración ausente/inválida muestra error accionable. Con URL válida ejecuta bootstrap; spinner hasta completar. Se elimina la sesión mock AsyncStorage; solo se publica identidad tras validar SecureStore y `/profile` protegido EMPLOYEE. Fallos impiden restaurar identidad local sin validación. AuthStore vive en memoria; tokens únicamente SecureStore. Evidencia portátil y límites API/Android en docs 06/09.
 
-`app/index.tsx` espera `hydrated`; `stores/authStore.ts` persiste `user` e `isAuthenticated`.
+## 2. Login email/legajo y OTP
 
-## 2. Login email/contraseña
-
-**Precondición:** pantalla login. **Fuente:** `LoginScreen.tsx`, `authService.ts`.
-
-1. Usuario completa correo/legajo y password.
-2. Se valida identificador y política de password.
-3. `login()` espera 800 ms y normaliza el identificador.
-4. Éxito solo con `empleado@gdes.com` / `Gdes@2025`.
-5. Se persiste usuario mock y el root muestra AppNavigator.
-6. Error de credenciales se muestra inline; excepción usa mensaje genérico.
+1. Login exige identifier/password no vacíos, sin aplicar política de alta a contraseña existente.
+2. POST `/auth/login` con client=MOBILE responde 202 challenge; no autentica.
+3. VerifyCodeScreen envía challengeId/code a `/auth/otp/verify`; reenvío usa endpoint/cooldown servidor.
+4. Solo respuesta válida con usuario EMPLOYEE/tokens instala sesión segura y AppNavigator. Errores servidor se muestran sin éxito ficticio.
+5. Refresh JSON rotativo single-flight; respuesta ambigua exige relogin. Logout limpia de inmediato y confirma revocación solo con respuesta servidor; fallos visibles permiten reintentar.
 
 ```mermaid
 sequenceDiagram
  actor U
- participant UI as LoginScreen
- participant S as authService
- participant Z as authStore
- U->>UI: Enviar credenciales
- UI->>UI: Validar campos
- UI->>S: login(email,password)
- S-->>UI: LoginResult mock
- alt éxito
-  UI->>Z: login(MOCK_USER)
-  Z-->>UI: sesión persistida
- else error
-  UI-->>U: mensaje inline
- end
+ participant UI as Login y OTP
+ participant API as Backend
+ participant S as Coordinador de sesión
+ U->>UI: identifier/password
+ UI->>API: login MOBILE
+ API-->>UI: 202 challenge
+ U->>UI: OTP
+ UI->>API: challengeId/code
+ API-->>S: user/tokens
+ S->>S: SecureStore e identidad EMPLOYEE
+ S-->>UI: sesión válida
 ```
 
-**Inconsistencia:** la UI permite legajo, pero el servicio no autentica `12345`.
+## 3. Google
 
-## 3. Google mock
-
-Login → modal con tres cuentas de `constants/data.ts` → seleccionar cualquiera → éxito temporizado 2 s → OTP → cualquier código de 6 dígitos → sesión fija `usr-google/google@gdes.com`. No hay SDK OAuth ni identidad de la cuenta elegida.
+El botón activo informa Google no configurado. No usa selector de cuentas ficticias ni instala identidad. OAuth/OTP Google real permanece pendiente de otra feature.
 
 ## 4. Registro
 
 1. Login → Registrarse.
 2. Se solicitan nombre, apellido, legajo, DNI, email, password y su confirmación, teléfono, domicilio, provincia/site y fecha de nacimiento (DD/MM/AAAA).
-3. Validaciones locales bloquean campos inválidos: confirmación exacta de contraseña, fecha calendario válida y no futura; barras de fecha automáticas. El ojo de cada contraseña es independiente; Siguiente recorre los campos y abre provincia desde domicilio. El hook `useKeyboardFormScroll` intenta mantener visible el campo con teclado nativo; sus pruebas actuales tienen fallas de geometría (ver QA).
+3. Validaciones locales bloquean campos inválidos: confirmación exacta de contraseña, fecha calendario válida y no futura; barras de fecha automáticas. El ojo de cada contraseña es independiente; Siguiente recorre los campos y abre provincia desde domicilio. El hook `useKeyboardFormScroll` intenta mantener visible el campo con teclado nativo; sus pruebas portátiles de geometría están conformes (ver QA).
 4. Si son válidos, **los datos no se envían ni almacenan**.
 5. Se abre OTP WhatsApp; cualquier código de 6 dígitos avanza.
 6. Pantalla “Te enviamos un correo” → Entendido.
@@ -77,7 +62,7 @@ Tabs manuales: documentos, home, perfil. Home incluye header; la pantalla de éx
 
 ## 7. Selección de lugar
 
-Al montar Home se cargan en paralelo lugares mock, lugar reciente, favoritos e historial. Se ordenan por relevancia y se preselecciona el reciente de la franja. Favoritos usan actualización optimista y AsyncStorage; no hay rollback si falla persistencia.
+Al montar Home se cargan en paralelo lugares mock, lugar reciente, favoritos e historial. Se ordenan por relevancia y se preselecciona el reciente de la franja. Preferencias usan AsyncStorage por propietario y descartan lecturas de una cuenta anterior; la UI Home todavía conserva la actualización optimista y requiere su migración de dominio.
 
 ## 8. Entrada/salida/ausencia
 
@@ -147,4 +132,4 @@ sequenceDiagram
 
 ## 12. Perfil y logout
 
-Perfil muestra `userProfile` fijo (Gina Tini), no `authStore.user`. Los campos son solo lectura. Logout pide confirmación, ejecuta `authStore.logout()` y el root vuelve a AuthNavigator. El estado de marcación en `useAppStore` no se limpia explícitamente.
+Perfil muestra `userProfile` fijo (Gina Tini), no `authStore.user`. Los campos son solo lectura. Logout pide confirmación y llama a `authService.logout()`/coordinador: invalida identidad de inmediato y ejecuta `resetAccount()` sobre `useAppStore`. El root vuelve a AuthNavigator; fallos de borrado/revocación quedan visibles para reintentar. La revocación remota solo se confirma con respuesta servidor. Detalles de persistencia, aislamiento y aceptación real en docs 06/09.

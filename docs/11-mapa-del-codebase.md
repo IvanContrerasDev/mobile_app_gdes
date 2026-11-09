@@ -7,7 +7,7 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 | Archivo | Responsabilidad |
 |---|---|
 | `app/_layout.tsx` | Root layout expo-router; providers, StatusBar, `global.css`. |
-| `app/index.tsx` | Decide Auth vs App según `authStore`; spinner de hidratación. |
+| `app/index.tsx` | Guard de configuración y bootstrap servidor; navegación tras validación de sesión. |
 | `app.json` | Configuración Expo (nombre, iconos, plugins, plataformas). |
 | `babel.config.js` | Preset Expo + NativeWind. |
 | `metro.config.js` | Configuración Metro. |
@@ -20,16 +20,16 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 
 | Archivo | Responsabilidad | Depende de |
 |---|---|---|
-| `navigation/AuthNavigator.tsx` | Flujo no autenticado por pasos. | screens de auth, GoogleModal, authStore. |
+| `navigation/AuthNavigator.tsx` | Flujo no autenticado por pasos. | screens de auth, challenge OTP y coordinador. |
 | `navigation/AppNavigator.tsx` | Flujo autenticado (tabs). | Home/Documentos/Perfil, header, tabs, stores. |
 
 ## Pantallas
 
 | Archivo | Responsabilidad | Servicios/estado |
 |---|---|---|
-| `screens/LoginScreen.tsx` | Login mock. | authService, authStore, validations. |
+| `screens/LoginScreen.tsx` | Login identifier/password real; entrega challenge OTP. | authService, authStore, validations. |
 | `screens/RegisterScreen.tsx` | Alta (sin persistir). | validations, provincias. |
-| `screens/VerifyCodeScreen.tsx` | OTP mock. | validateOTPCode. |
+| `screens/VerifyCodeScreen.tsx` | OTP LOGIN backend y REGISTER todavía mock. | validateOTPCode. |
 | `screens/ForgotPasswordScreen.tsx` | Recuperación mock. | passwordRecoveryService, networkService. |
 | `screens/SuccessScreens.tsx` | Confirmaciones/temporizadores. | Icons, ActionType. |
 | `screens/HomeScreen.tsx` | Marcación GPS/red. | register/location/network/workplace + favoritos/recientes/usados + sorting + stores. |
@@ -42,7 +42,7 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 |---|---|
 | `components/AppHeader.tsx` | Logo en Home. |
 | `components/BottomTabs.tsx` | Tabs manuales. |
-| `components/GoogleModal.tsx` | Cuentas Google mock. |
+| `components/GoogleModal.tsx` | Cuentas legacy inactivas en acceso Google. |
 | `components/InputWithError.tsx` | Campo con error, ref nativa y accesorio (activo). |
 | `components/useKeyboardFormScroll.ts` | Mantiene foco visible, calcula margen de teclado y limpia listeners/frames; usado en registro. |
 | `components/OTPInput.tsx` | Entrada OTP. |
@@ -53,14 +53,18 @@ Referencia rápida de responsabilidad y relaciones por archivo.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `stores/authStore.ts` | Sesión persistida + `hydrated`. |
+| `stores/authStore.ts` | Estado de sesión en memoria + `hydrated`/error. |
 | `store/useAppStore.ts` | Marcación en memoria; `user` interno sin uso. |
 
 ## Servicios
 
 | Archivo | Naturaleza |
 |---|---|
-| `services/authService.ts` | Mock auth. |
+| `services/authService.ts` | Wiring de sesión/OTP y transporte autenticado. |
+| `services/sessionCoordinator.ts` | Bootstrap, refresh single-flight, logout y protección de operaciones tardías. |
+| `services/tokenRepository.ts` | SecureStore y marca no sensible de invalidación. |
+| `services/accountPreferences.ts`, `accountScope.ts`, `localPreferences.ts` | Preferencias por propietario y generación. |
+| `services/httpClient.ts` | Transporte común, envelopes, errores, timeout/cancelación y configuración. |
 | `services/registerService.ts` | Mock marcación. |
 | `services/workplaceService.ts` | Mock lugares. |
 | `services/favoriteWorkplaceService.ts` | Local favoritos. |

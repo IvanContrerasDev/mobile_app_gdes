@@ -1,114 +1,59 @@
-// Offline Register Service
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RegisterRequest } from "../types/api";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RegisterRequest } from '../types/api';
+import { getAccountScope } from './accountScope';
 
-const OFFLINE_REGISTERS_KEY = "offline-registers";
-
-/**
- * Offline register record with sync status
- */
+/** Infraestructura todavía inactiva; M-05 reemplazará el DTO y activará sincronización durable. */
 export interface OfflineRegister {
   id: string;
+  ownerId: string;
   request: RegisterRequest;
   createdAt: string;
   synced: false;
 }
-
-/**
- * Generate unique ID for offline register
- */
-function generateId(): string {
-  return `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+// La key legacy offline-registers queda preservada y fuera del sync: carece de dueño verificable.
+const key = (ownerId: string) => `offline-registers:v1:${encodeURIComponent(ownerId)}`;
+let tail: Promise<unknown> = Promise.resolve();
+function exclusive<T>(fn: () => Promise<T>): Promise<T> { const task = tail.then(fn); tail = task.catch(() => {}); return task; }
+async function read(ownerId: string): Promise<OfflineRegister[]> {
+  const raw = await AsyncStorage.getItem(key(ownerId));
+  if (raw === null) return [];
+  const value: unknown = JSON.parse(raw);
+  if (!Array.isArray(value) || value.some(v => !v || v.ownerId !== ownerId || typeof v.id !== 'string' || v.synced !== false)) throw new Error('La cola pendiente no es válida.');
+  return value;
 }
-
-/**
- * Save a register request to local storage for later sync
- * @param request - The complete RegisterRequest to save
- * @returns Promise<OfflineRegister> - The saved offline register
- */
-export async function saveOfflineRegister(
-  request: RegisterRequest
-): Promise<OfflineRegister> {
-  try {
-    // Get existing registers
-    const existing = await getPendingRegisters();
-    
-    // Create new offline register
-    const offlineRegister: OfflineRegister = {
-      id: generateId(),
-      request,
-      createdAt: new Date().toISOString(),
-      synced: false,
-    };
-    
-    // Add to list
-    const updated = [...existing, offlineRegister];
-    
-    // Save to AsyncStorage
-    await AsyncStorage.setItem(OFFLINE_REGISTERS_KEY, JSON.stringify(updated));
-    
-    console.log("[v0] Registro guardado offline:", offlineRegister.id);
-    
-    return offlineRegister;
-  } catch (error) {
-    console.log("[v0] Error saving offline register:", error);
-    throw new Error("No fue posible guardar el registro localmente.");
-  }
+export async function saveOfflineRegister(request: RegisterRequest): Promise<OfflineRegister> {
+  const scope = getAccountScope();
+  if (!scope.ownerId) throw new Error('Iniciá sesión antes de guardar registros.');
+  return exclusive(async () => {
+    const existing = await read(scope.ownerId!);
+    if (scope !== getAccountScope()) throw new Error('La cuenta cambió.');
+    const entry: OfflineRegister = { id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`, ownerId: scope.ownerId!, request, createdAt: new Date().toISOString(), synced: false };
+    await AsyncStorage.setItem(key(scope.ownerId!), JSON.stringify([...existing, entry]));
+    if (scope !== getAccountScope()) throw new Error('La cuenta cambió; el registro conserva su propietario original.');
+    return entry;
+  });
 }
-
-/**
- * Get all pending (unsynced) registers from local storage
- * @returns Promise<OfflineRegister[]> - Array of pending registers
- */
 export async function getPendingRegisters(): Promise<OfflineRegister[]> {
-  try {
-    const data = await AsyncStorage.getItem(OFFLINE_REGISTERS_KEY);
-    
-    if (!data) {
-      return [];
-    }
-    
-    const registers: OfflineRegister[] = JSON.parse(data);
-    
-    // Filter only unsynced registers
-    return registers.filter((r) => r.synced === false);
-  } catch (error) {
-    console.log("[v0] Error getting pending registers:", error);
-    return [];
-  }
+  const scope = getAccountScope();
+  if (!scope.ownerId) return [];
+  const pending = await read(scope.ownerId);
+  return scope === getAccountScope() ? pending : [];
 }
-
-/**
- * Get count of pending registers
- * @returns Promise<number> - Number of pending registers
- */
-export async function getPendingCount(): Promise<number> {
-  const pending = await getPendingRegisters();
-  return pending.length;
-}
-
-/**
- * Clear all offline registers (use after successful sync)
- */
+export async function getPendingCount(): Promise<number> { return (await getPendingRegisters()).length; }
 export async function clearOfflineRegisters(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(OFFLINE_REGISTERS_KEY);
-    console.log("[v0] Offline registers cleared");
-  } catch (error) {
-    console.log("[v0] Error clearing offline registers:", error);
-  }
+  const scope = getAccountScope();
+  if (!scope.ownerId) return;
+  await exclusive(async () => {
+    if (scope !== getAccountScope()) throw new Error('La cuenta cambió.');
+    await AsyncStorage.removeItem(key(scope.ownerId!));
+  });
 }
-
-/**
- * Remove a specific register by ID (after successful sync)
- */
 export async function removeOfflineRegister(id: string): Promise<void> {
-  try {
-    const existing = await getPendingRegisters();
-    const updated = existing.filter((r) => r.id !== id);
-    await AsyncStorage.setItem(OFFLINE_REGISTERS_KEY, JSON.stringify(updated));
-    console.log("[v0] Offline register removed:", id);
-  } catch (error) {
-    console.log("[v0] Error removing offline register:", error);
-  }
+  const scope = getAccountScope();
+  if (!scope.ownerId) throw new Error('Iniciá sesión para sincronizar.');
+  await exclusive(async () => {
+    const pending = await read(scope.ownerId!);
+    if (scope !== getAccountScope()) throw new Error('La cuenta cambió.');
+    await AsyncStorage.setItem(key(scope.ownerId!), JSON.stringify(pending.filter(v => v.id !== id)));
+  });
 }

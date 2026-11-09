@@ -2,12 +2,12 @@ import { useState } from "react";
 import { View, Text, Pressable, ScrollView, Image, ActivityIndicator } from "react-native";
 import { InputWithError } from "../components/InputWithError";
 import { GoogleIcon } from "../components/Icons";
-import { validateEmailOrLegajo, validatePassword } from "../utils/validations";
-import { login as loginRequest } from "../services/authService";
-import { useAuthStore } from "../stores/authStore";
+import { validateRequired } from "../utils/validations";
+import { login as loginRequest, type LoginChallenge } from "../services/authService";
+import { HttpError } from "../services/httpClient";
 
 interface LoginScreenProps {
-  onLogin: () => void;
+  onLogin: (challenge: LoginChallenge) => void;
   onGoogleLogin: () => void;
   onForgotPassword: () => void;
   onRegister: () => void;
@@ -20,13 +20,11 @@ export function LoginScreen({ onLogin, onGoogleLogin, onForgotPassword, onRegist
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const loginToStore = useAuthStore((state) => state.login);
-
   const handleSubmit = async () => {
     setAuthError("");
 
-    const emailError = validateEmailOrLegajo(email);
-    const passwordError = validatePassword(password);
+    const emailError = validateRequired(email, "Email o legajo");
+    const passwordError = password ? null : "Este campo es obligatorio";
 
     setErrors({ email: emailError, password: passwordError });
 
@@ -37,18 +35,11 @@ export function LoginScreen({ onLogin, onGoogleLogin, onForgotPassword, onRegist
     setIsLoading(true);
 
     try {
-      // Execute mock authentication
-      const result = await loginRequest(email, password);
-
-      if (result.success && result.user) {
-        // Persist session in auth store
-        loginToStore(result.user);
-        onLogin();
-      } else {
-        setAuthError(result.message || "Usuario o contraseña incorrectos.");
-      }
+      const challenge = await loginRequest(email, password);
+      setPassword("");
+      onLogin(challenge);
     } catch (error) {
-      setAuthError("No fue posible iniciar sesión. Intente nuevamente.");
+      setAuthError(error instanceof HttpError ? error.message : "No fue posible iniciar sesión. Intente nuevamente.");
     } finally {
       setIsLoading(false);
     }
